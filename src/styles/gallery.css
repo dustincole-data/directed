@@ -29,6 +29,16 @@ body { margin: 0; background: var(--bg); color: var(--ink);
 .swatch__arm { font-weight: 600; color: var(--ink); }
 .gap { border: 1px dashed var(--rule); padding: 1rem; font-size: .8125rem; color: var(--muted); }
 .gap h4 { margin: 0 0 .5rem; color: var(--ink); }
+/* A cell that shipped without moving its row's lever. Sits under the render it
+   qualifies, in the reading colour rather than the muted one — a reader who
+   sees the swatch has to see this too, or the gallery is claiming a difference
+   it did not make. */
+.swatch__null { margin: .5rem 0 0; padding: .5rem .625rem; font-size: .75rem;
+  line-height: 1.45; color: var(--ink); border-left: 2px solid var(--ink); background: #f4f4f2; }
+.null-result { margin: 1.5rem 0 0; padding: 1rem; border: 1px solid var(--ink); font-size: .875rem; }
+.null-result h3 { margin: 0 0 .5rem; font-size: .9375rem; }
+.null-result p { margin: 0 0 .5rem; }
+.null-result__note { margin: 0; color: var(--muted); font-size: .8125rem; }
 .prov { margin: 1.5rem 0 0; display: grid; grid-template-columns: max-content 1fr;
   gap: .25rem 1rem; font-size: .875rem; }
 .prov dt { font-weight: 600; color: var(--ink); }

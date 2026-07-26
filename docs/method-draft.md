@@ -130,6 +130,40 @@ Phase 1 tree it flags these three cells and no others.
 A probe can only prove a lever moved — never that it moved well. It is a floor
 under the claim these pages make, not a judgement of the design.
 
+### All three still ship, labelled
+
+The probe found them; it did not get to delete them. Each is published with
+**"Premise not engaged"** under its render and the reason on its provenance
+page, declared as a `nullResult` in `src/rows.json` and enforced in both
+directions — a cell whose lever *did* move is not allowed to carry the
+disclosure, so it cannot go stale.
+
+Two available fixes were rejected, and naming them is part of the disclosure:
+
+- **Regenerating the three under lever-forcing prompts.** That measures the
+  skill *plus an explicit brief* while the published method still reads
+  `dataviz` or `/impeccable craft`. The whole question these rows ask is what a
+  named skill does when it is simply run — telling it the answer first and
+  publishing the result under the same label would manufacture the finding.
+- **Relabelling `type-04-numerals` as an annotation-density row.** Its Arm B
+  edit is real and would fit that title. But choosing the hypothesis after
+  seeing the result is exactly the move this project exists to argue against,
+  and it would quietly retire "tabular vs proportional figures" — a lever
+  nothing has yet tested — from the 48-row inventory. The row keeps its title
+  and keeps its null.
+
+`mark-07-overlap` has a further, more interesting cause, found while deciding
+this and not previously recorded: **the baseline does not overplot.** Its eight
+bubbles sit on one row at `cy=210`, and measured from the committed
+`render.svg`, every pair is disjoint — the tightest clearance, Jupiter to
+Saturn, is about 7px. Arm A had also already sorted its marks by descending
+radius and set `fill-opacity` before any skill ran. So neither treated arm
+declined to fix overplotting; there was no overplotting in front of it. That is
+a defect in the *row*, not in the skills: testing "opacity, jitter, ordering"
+needs a fixture that actually overplots, which `hero8` at 640×400 is not. The
+row is kept, with both nulls published, rather than being quietly re-run against
+a chart that never had the problem.
+
 ## Not a benchmark
 
 No scores. No winner declared per row. Some rows will show almost no

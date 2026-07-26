@@ -25,6 +25,7 @@ const synthetic: Registry = {
       family: "test",
       mode: "refine",
       fixture: "table12",
+      premise: "font-family",
       phase: 1,
       gap: null,
       declaredArms: [
@@ -60,6 +61,7 @@ const synthetic: Registry = {
       family: "test",
       mode: "from-scratch",
       fixture: "hero8",
+      premise: "element-composition",
       phase: 2,
       gap: null,
       declaredArms: [{ arm: "A", kind: "default", method: "clean subagent" }],

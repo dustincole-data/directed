@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeEach, afterAll } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, afterAll } from "vitest";
 import { mkdir, writeFile, rm, readFile, copyFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
-import { verifyCells } from "./verify-cells.mjs";
+import { verifyCells, nullResultDeclFailures } from "./verify-cells.mjs";
 import { writeCellManifest } from "./new-cell.mjs";
 import { renderCell } from "./render-cell.mjs";
 
@@ -432,5 +432,122 @@ describe("verifyCells check 12 — a treated arm must move its row's declared pr
     expect(ok).toBe(false);
     expect(failures.join()).toContain(`${row}.B: src/rows.json declares no premise probe`);
     await rm(`${ROOT}/${row}`, { recursive: true, force: true });
+  });
+
+  it("names the two honest ways out, so the failure doesn't read as 'delete the cell'", async () => {
+    await writeRefineB(`${ROW}.A`, CHART_OFF_PREMISE);
+    const { failures } = await verifyCells({ cellsDir: ROOT });
+    expect(failures.join()).toMatch(/nullResult/);
+  });
+});
+
+// A probe-identical cell is a finding, not a defect in the harness: "the named
+// skill, run exactly as its documentation says, did not touch this lever" is
+// the most load-bearing thing this gallery can report. Check 12 must stop it
+// being published as a *demonstration* without also pushing the next session
+// toward deleting it, regenerating it under a lever-forcing prompt (which
+// measures "skill plus an explicit brief" while still calling itself the
+// skill), or relabelling the row to whatever the arm happened to change (which
+// picks the hypothesis after seeing the data). The declared-nullResult path is
+// the way through — and it is checked in both directions, so it cannot become a
+// mute button.
+describe("verifyCells check 12 — a declared null result ships, disclosed and cross-checked", () => {
+  // type-04-numerals.B is the real one of these: `dataviz` cut 24 numeric
+  // annotations to 2 and never touched numeral formatting. It declares a
+  // nullResult in src/rows.json, so the row seeded here mirrors that shape —
+  // real row, real declared method, real `numeric-format` premise.
+  const NULL_ROW = "type-04-numerals";
+
+  // That probe only reads text that actually contains digits, so a module
+  // labelling bars with country names alone probes empty either way and would
+  // make both tests below pass for the wrong reason. Put a number in the label.
+  const NUM = CHART.replace("t.textContent=r.label;", 't.textContent=r.label+" "+r.value;');
+  /** Moves the premise: a different stack on the digit-bearing text. */
+  const NUM_TREATED = NUM.replace("Helvetica, Arial, sans-serif", "Georgia, serif");
+  /** Doesn't: recolours the bars, numeral formatting untouched. */
+  const NUM_OFF_PREMISE = NUM.replace(
+    'e.setAttribute("x",String(i*16));',
+    'e.setAttribute("x",String(i*16));e.setAttribute("fill","#d55181");',
+  );
+  const NUM_PROMPT_B = `Here is a chart module. Invoke the \`dataviz\` skill, then apply what it says.\n\n${NUM.trim()}\n\nKeep the same module shape and the same data.\n`;
+
+  async function seedNullResultRow(bCode) {
+    for (const [arm, code] of [["A", NUM], ["B", bCode]]) {
+      const d = `${ROOT}/${NULL_ROW}/${arm}`;
+      await mkdir(d, { recursive: true });
+      await writeFile(`${d}/chart.js`, code);
+      await renderCell(d);
+      await writeCellManifest({
+        cellDir: d, row: NULL_ROW, rowTitle: "Tabular vs proportional figures",
+        family: "type", arm, mode: "refine",
+        method: arm === "A"
+          ? { kind: "default", name: "clean subagent, naive prompt", args: "", ranOn: null }
+          : { kind: "skill", name: "dataviz", args: "", ranOn: `${NULL_ROW}.A` },
+        prompt: arm === "A" ? PROMPT_A : NUM_PROMPT_B, fixture: "table12",
+      });
+    }
+  }
+
+  afterEach(async () => {
+    await rm(`${ROOT}/${NULL_ROW}`, { recursive: true, force: true });
+  });
+
+  it("passes a probe-identical arm its row declares a nullResult for", async () => {
+    // Same shape as the shipped cell: a real edit, a real hash change, and a
+    // numeric-format probe identical to the baseline's.
+    await seedNullResultRow(NUM_OFF_PREMISE);
+    const { ok, failures } = await verifyCells({ cellsDir: ROOT });
+    expect(failures.join()).not.toMatch(/premise not engaged/);
+    expect(ok).toBe(true);
+  });
+
+  it("fails when a declared nullResult sits on an arm whose probe actually moved", async () => {
+    // The stale-disclosure case, and the reason this is a two-way check rather
+    // than a waiver: regenerate the cell so the lever does move, leave the
+    // declaration behind, and the page tells a reader the premise is untested
+    // when it isn't.
+    await seedNullResultRow(NUM_TREATED);
+    const { ok, failures } = await verifyCells({ cellsDir: ROOT });
+    expect(ok).toBe(false);
+    expect(failures.join()).toContain(`${NULL_ROW}.B: src/rows.json declares a nullResult`);
+    expect(failures.join()).toMatch(/the disclosure is stale/);
+  });
+});
+
+// check 3c guards the declaration itself. Exercised directly against the pure
+// helper rather than through verifyCells(), because the inventory it validates
+// is src/rows.json — which is real, checked in, and currently valid, so there
+// is no way to seed a malformed declaration through the gate's front door.
+describe("nullResultDeclFailures — check 3c", () => {
+  const REASON = "dataviz cut 24 numeric annotations to 2 and never touched numeral formatting.";
+  const row = (arms) => ({ id: "null-01-probe", declaredArms: arms });
+
+  it("accepts a treated arm with a stated reason", () => {
+    const out = nullResultDeclFailures(row([
+      { arm: "A", kind: "default", method: "clean subagent, naive prompt" },
+      { arm: "B", kind: "skill", method: "dataviz", nullResult: REASON },
+    ]));
+    expect(out).toEqual([]);
+  });
+
+  it("says nothing about an arm that declares no null result at all", () => {
+    expect(nullResultDeclFailures(row([{ arm: "B", kind: "skill", method: "dataviz" }]))).toEqual([]);
+  });
+
+  it("rejects a reason too short to say what moved instead", () => {
+    const out = nullResultDeclFailures(row([{ arm: "B", kind: "skill", method: "dataviz", nullResult: "n/a" }]));
+    expect(out.join()).toContain("null-01-probe.B: nullResult needs a stated reason");
+  });
+
+  it("rejects a bare truthy flag — the disclosure is the whole point", () => {
+    const out = nullResultDeclFailures(row([{ arm: "B", kind: "skill", method: "dataviz", nullResult: true }]));
+    expect(out.join()).toContain("nullResult needs a stated reason");
+  });
+
+  it("rejects the baseline declaring itself null — it is what a null is measured against", () => {
+    const out = nullResultDeclFailures(row([
+      { arm: "A", kind: "default", method: "clean subagent, naive prompt", nullResult: REASON },
+    ]));
+    expect(out.join()).toContain("null-01-probe.A: only a treated arm can declare a nullResult");
   });
 });

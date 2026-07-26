@@ -60,6 +60,37 @@ describe("rows", () => {
     expect(glow.gap!.length).toBeGreaterThan(20);
   });
 
+  // A `nullResult` is the only way a treated cell gets past the premise probe,
+  // so the set of arms carrying one is pinned here rather than left to drift: a
+  // fourth appearing is a claim about the gallery, not a refactor.
+  it("only the three Phase 1 arms whose lever never moved declare a null result", () => {
+    const declared = ROWS.flatMap((r) =>
+      r.arms.filter((a) => a.nullResult).map((a) => `${r.id}.${a.arm}`),
+    );
+    expect(declared.sort()).toEqual([
+      "mark-07-overlap.B",
+      "mark-07-overlap.C",
+      "type-04-numerals.B",
+    ]);
+  });
+
+  it("every null result sits on a treated arm and states a reason", () => {
+    for (const r of ROWS) {
+      for (const a of r.arms) {
+        if (!a.nullResult) continue;
+        expect(a.arm, `${r.id}.${a.arm}`).not.toBe("A");
+        expect(a.nullResult.trim().length, `${r.id}.${a.arm}`).toBeGreaterThan(40);
+      }
+    }
+  });
+
+  it("a row whose arm declares a null result also declares the probe that proves it", () => {
+    for (const r of ROWS) {
+      if (!r.arms.some((a) => a.nullResult)) continue;
+      expect(r.premise, `${r.id} declares a null result but no premise probe`).toBeTruthy();
+    }
+  });
+
   it("the shared arm-A object is frozen, so mutating one row's arms[0] cannot corrupt another row's", () => {
     const before = ROWS[0].arms[0].method;
     expect(ROWS[1].arms[0].method).toBe(before); // same shared reference, sanity check

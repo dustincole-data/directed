@@ -5,7 +5,17 @@ export type Arm = "A" | "B" | "C";
 export type Mode = "refine" | "from-scratch";
 export type MethodKind = "default" | "skill" | "tool";
 
-export type ArmDecl = { arm: Arm; kind: MethodKind; method: string };
+export type ArmDecl = {
+  arm: Arm;
+  kind: MethodKind;
+  method: string;
+  /** Set only on a treated arm whose probe came back identical to its baseline's:
+   *  the row's stated lever never moved, and the cell ships disclosed as that
+   *  rather than deleted, regenerated under a lever-forcing prompt, or relabelled
+   *  to fit what it happened to change. The gate checks the declaration both ways
+   *  (check 12) — an arm whose probe *did* move may not carry one. */
+  nullResult?: string;
+};
 export type RowDecl = {
   id: string;
   family: string;

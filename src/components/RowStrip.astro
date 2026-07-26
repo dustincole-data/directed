@@ -3,6 +3,7 @@
 import Swatch from "./Swatch.astro";
 import GapPanel from "./GapPanel.astro";
 import { modeBadge } from "../lib/labels";
+import { nullResultFor } from "../lib/registry";
 const { row } = Astro.props;
 ---
 <section class="row" id={row.id}>
@@ -13,7 +14,7 @@ const { row } = Astro.props;
   </header>
   {row.cells.length === 0 && !row.gap && <p class="row__todo">Not generated yet.</p>}
   <div class="row__cells">
-    {row.cells.map((cell) => <Swatch cell={cell} />)}
+    {row.cells.map((cell) => <Swatch cell={cell} nullResult={nullResultFor(cell, row)} />)}
     {row.gap && <GapPanel reason={row.gap} />}
   </div>
 </section>

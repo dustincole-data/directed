@@ -286,6 +286,48 @@ tested for what it must not react to, not only for what it must catch.
 A passing probe is a floor, never a verdict. It proves the lever moved; it
 cannot prove it moved *well*. That judgement stays human.
 
+## When the probe comes back identical: declare the null result
+
+A treated arm whose probe matches its baseline's is a **finding**, not a broken
+cell. "The named skill, invoked exactly as its own documentation says to, did
+not touch this lever" is one of the more load-bearing things this gallery can
+report, and there are only three things to do with it. Two of them destroy it:
+
+- **Regenerating under a lever-forcing prompt** ("…and fix the overplotting")
+  measures *skill plus an explicit brief* while the manifest still says the
+  method was the bare skill. If that comparison is worth making, it is a
+  separate declared arm with its own method string — the row registry already
+  has that shape (`craft + explicit halo brief`) — not a quiet re-run of this
+  one.
+- **Relabelling the row** to whatever the arm happened to change picks the
+  hypothesis after seeing the data, and retires a real untested lever from the
+  inventory to make a null look like a hit.
+
+The third is to publish it as what it is. Add a `nullResult` to that arm in
+`src/rows.json`, stating what the arm *did* move and why the lever didn't:
+
+```json
+{ "arm": "B", "kind": "skill", "method": "dataviz",
+  "nullResult": "dataviz cut 24 numeric annotations down to 2 without ever reaching for font-variant-numeric …" }
+```
+
+The string is published verbatim as page text, not markdown, so write it plain —
+no backticks — the way the `gap` reasons in the same file are written.
+
+The cell then ships with **"Premise not engaged"** printed under its render in
+the gallery and a full disclosure panel on its provenance page. The gate holds
+the declaration to the same standard as a `gap` reason, and checks it **both
+ways**:
+
+- no `nullResult` + identical probe → fail (a null published as a demonstration);
+- `nullResult` + a probe that *moved* → fail (a stale disclosure telling a
+  reader the lever is untested when it isn't);
+- `nullResult` on Arm A, or with no stated reason → fail (the baseline is what a
+  null is measured against, and an undocumented flag is a mute button).
+
+So the declaration cannot outlive the fact it describes. Regenerate the cell for
+real and the gate makes you delete the disclosure.
+
 For a `refine`-mode row, arms B and C must pass `--ran-on` set to **exactly**
 `<row>.A` — the row id, a literal period, and an uppercase `A`, nothing else.
 `verify-cells.mjs` rejects a bare row id, a `.B`/`.C` suffix, and a lowercase

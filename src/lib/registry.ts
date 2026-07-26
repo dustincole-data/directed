@@ -17,9 +17,16 @@ export type RegistryRow = {
   family: string;
   mode: "refine" | "from-scratch";
   fixture: string;
+  /** Probe id the gate checks this row's treated arms against; null until declared. */
+  premise: string | null;
   phase: number;
   gap: string | null;
-  declaredArms: { arm: "A" | "B" | "C"; kind: "default" | "skill" | "tool"; method: string }[];
+  declaredArms: {
+    arm: "A" | "B" | "C";
+    kind: "default" | "skill" | "tool";
+    method: string;
+    nullResult?: string;
+  }[];
   cells: RegistryCell[];
 };
 export type Registry = { built: string; families: { family: string; rows: string[] }[]; rows: RegistryRow[] };
@@ -39,6 +46,21 @@ export function findCell(
   reg: Registry = getRegistry(),
 ): { cell: RegistryCell; row: RegistryRow } | null {
   return allCells(reg).find(({ cell }) => cell.id === id) ?? null;
+}
+
+/**
+ * The row's declared reason that this arm's premise probe came back identical to
+ * its baseline's — the lever the row exists to demonstrate never moved.
+ *
+ * The gate (check 12) will not let a probe-identical cell ship without one, and
+ * will not let a cell that *did* move its premise carry one, so this is the
+ * disclosure a reader is owed wherever the render appears. Returns null for an
+ * arm that engaged its premise, and for Arm A, which is what nulls are measured
+ * against rather than a candidate for one.
+ */
+export function nullResultFor(cell: RegistryCell, row: RegistryRow): string | null {
+  if (cell.arm === "A") return null;
+  return row.declaredArms.find((a) => a.arm === cell.arm)?.nullResult ?? null;
 }
 
 /** Coarse structural diff: which SVG element types the treated arm added or dropped. */

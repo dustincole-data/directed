@@ -26,6 +26,27 @@ async function exists(p) {
   }
 }
 
+/**
+ * check 3c: a `nullResult` is the only way past check 12, so the declaration is
+ * held to the same standard as `gap` — it must sit on a treated arm, and it must
+ * state a reason. A bare `"nullResult": true` would turn the premise probe from
+ * a gate into a mute button, which is the one way this escape hatch could undo
+ * the check it lives inside.
+ */
+export function nullResultDeclFailures(r) {
+  const out = [];
+  for (const a of r.declaredArms ?? []) {
+    if (a.nullResult === undefined) continue;
+    if (typeof a.nullResult !== "string" || a.nullResult.trim().length < 40) {
+      out.push(`${r.id}.${a.arm}: nullResult needs a stated reason (what the arm moved instead, and why the lever didn't)`);
+    }
+    if (a.arm === "A") {
+      out.push(`${r.id}.A: only a treated arm can declare a nullResult — the baseline is what a null result is measured against`);
+    }
+  }
+  return out;
+}
+
 async function generatedDirs(cellsRoot) {
   const out = [];
   let rowEntries;
@@ -57,6 +78,8 @@ export async function verifyCells({ cellsDir = "cells" } = {}) {
     if (!["refine", "from-scratch"].includes(r.mode)) failures.push(`${r.id}: bad mode "${r.mode}"`);
     if (!r.declaredArms?.length) failures.push(`${r.id}: declares no arms`);
     if (r.gap && (!r.gap.trim() || r.gap.trim().length < 20)) failures.push(`${r.id}: gap needs a stated reason`);
+
+    failures.push(...nullResultDeclFailures(r));
   }
 
   for (const { row, arm } of await generatedDirs(CELLS)) {
@@ -281,6 +304,24 @@ export async function verifyCells({ cellsDir = "cells" } = {}) {
     // The probe is a floor, not a verdict: it proves the lever moved, never
     // that it moved well. Quality stays a human judgement — this only stops a
     // null result being published as a demonstration.
+    //
+    // What it must not become is a reason to delete inconvenient cells. A null
+    // result is a finding — "the named skill, invoked as its documentation says
+    // to, did not touch this lever" is the most load-bearing thing this gallery
+    // can report — and the two ways to make one disappear are both worse than
+    // publishing it: regenerating under a lever-forcing prompt measures "skill
+    // plus an explicit brief" while still calling itself the skill, and
+    // relabelling the row to whatever the arm happened to change picks the
+    // hypothesis after seeing the data. So an arm may ship probe-identical, but
+    // only if `src/rows.json` declares a `nullResult` reason for it, and the
+    // published page says so where the render is.
+    //
+    // The declaration is checked in both directions. A cell whose probe *did*
+    // move may not carry one: otherwise a stale disclosure would sit under a
+    // cell that has since been regenerated, telling a reader the lever is
+    // untested when it isn't. Same rule as every other field in a cell —
+    // cross-validated against something that can contradict it, never
+    // self-certified.
     if (arm !== "A" && !decl.gap) {
       const basePath = join(CELLS, row, "A", "render.svg");
       const ownPath = join(dir, "render.svg");
@@ -294,9 +335,13 @@ export async function verifyCells({ cellsDir = "cells" } = {}) {
         try {
           const base = probeSvg(decl.premise, await readFile(basePath, "utf8"));
           const own = probeSvg(decl.premise, await readFile(ownPath, "utf8"));
-          if (base === own) {
+          if (base === own && !declArm.nullResult) {
             failures.push(
-              `${tag}: premise not engaged — its "${decl.premise}" probe is identical to ${row}.A's, so the lever this row exists to demonstrate was never pulled`,
+              `${tag}: premise not engaged — its "${decl.premise}" probe is identical to ${row}.A's, so the lever this row exists to demonstrate was never pulled. Fix the cell, or declare a nullResult reason for this arm in src/rows.json and publish it as the null result it is`,
+            );
+          } else if (base !== own && declArm.nullResult) {
+            failures.push(
+              `${tag}: src/rows.json declares a nullResult for this arm, but its "${decl.premise}" probe differs from ${row}.A's — the lever did move, so the disclosure is stale and must be removed`,
             );
           }
         } catch (err) {

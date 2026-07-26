@@ -60,6 +60,17 @@ describe("factory runbook", () => {
     expect(factory).toContain("scripts/premise.mjs");
     expect(factory).toMatch(/check 12/i);
   });
+
+  // A check-12 failure has one honest resolution and two destructive ones. The
+  // runbook is what the next generation session reads when it hits that failure
+  // at 2am; if it only says "the lever didn't move", the cheap fixes are to
+  // delete the cell or add "…and fix the overplotting" to the prompt.
+  it("tells a blocked session to declare the null result, not to force the lever", () => {
+    expect(factory).toContain("nullResult");
+    expect(factory).toMatch(/lever-forcing prompt/i);
+    expect(factory).toMatch(/relabel/i);
+    expect(factory).toMatch(/both\s*\*?\*?ways/i);
+  });
 });
 
 describe("method draft", () => {
@@ -94,5 +105,22 @@ describe("method draft", () => {
     for (const cell of ["mark-07-overlap.B", "mark-07-overlap.C", "type-04-numerals.B"]) {
       expect(method, `undisclosed null-result cell: ${cell}`).toContain(cell);
     }
+  });
+
+  // The gate could have been cleared by deleting those three cells or by
+  // regenerating them under prompts that name the lever. Both were rejected;
+  // a reader can only weigh the gallery's claim if the page says so.
+  it("records that the three null results ship labelled, and what was rejected", () => {
+    expect(method).toMatch(/premise not engaged/i);
+    expect(method).toMatch(/lever-forcing prompt/i);
+    expect(method).toMatch(/relabelling/i);
+  });
+
+  // mark-07-overlap's nulls are not a verdict on the two skills: the chart they
+  // were handed has no overlapping marks. Publishing the row without that fact
+  // would read as "two named skills both failed at overplotting".
+  it("discloses that mark-07-overlap's baseline does not actually overplot", () => {
+    expect(method).toMatch(/does not overplot/i);
+    expect(method).toMatch(/disjoint/i);
   });
 });

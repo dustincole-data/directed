@@ -1,7 +1,7 @@
 ---
 // src/components/Swatch.astro
 import { armLabel, methodChip } from "../lib/labels";
-const { cell } = Astro.props;
+const { cell, nullResult = null } = Astro.props;
 ---
 <figure class="swatch">
   <div class="swatch__render" set:html={cell.svg} />
@@ -11,4 +11,9 @@ const { cell } = Astro.props;
     {cell.arm === "A" && <span class="swatch__runs">{cell.runs} runs · {cell.shipped}</span>}
     <a class="swatch__link" href={`/cell/${cell.id}`}>prompt &amp; code →</a>
   </figcaption>
+  {nullResult && (
+    <p class="swatch__null">
+      <strong>Premise not engaged.</strong> {nullResult}
+    </p>
+  )}
 </figure>

@@ -88,7 +88,8 @@
       {
         "arm": "B",
         "kind": "skill",
-        "method": "dataviz"
+        "method": "dataviz",
+        "nullResult": "dataviz cut 24 numeric annotations down to 2 without ever reaching for font-variant-numeric, font-feature-settings, or a tabular-figure font; both arms keep the same Helvetica stack. That is a real annotation-density edit, not the tabular-vs-proportional lever this row names, which stays untested. The row was deliberately not relabelled to fit the outcome — picking the hypothesis after seeing the result is the move this project argues against."
       }
     ]
   },
@@ -396,12 +397,14 @@
       {
         "arm": "B",
         "kind": "skill",
-        "method": "dataviz"
+        "method": "dataviz",
+        "nullResult": "dataviz recoloured every mark and thickened its stroke while leaving all 16 circles' cx/cy/r/fill-opacity byte-identical to Arm A. The cause is upstream of the skill: the hero8 baseline's eight bubbles are already disjoint (smallest clearance about 7px), so there was no overplotting available to fix. Testing this lever needs a fixture that actually overplots, not a prompt that forces an edit onto a chart that does not."
       },
       {
         "arm": "C",
         "kind": "skill",
-        "method": "/impeccable craft"
+        "method": "/impeccable craft",
+        "nullResult": "/impeccable craft collapsed five secondary text greys into one and changed no circle attribute at all — a typographic-hierarchy edit. Same cause as Arm B: the hero8 baseline does not overplot, so this row's premise was never available to engage on either of its treated arms."
       }
     ]
   },

@@ -1,10 +1,22 @@
 ---
 // src/components/Provenance.astro
 import { methodChip, armLabel, modeBadge } from "../lib/labels";
-import { diffAgainstBaseline } from "../lib/registry";
+import { diffAgainstBaseline, nullResultFor } from "../lib/registry";
 const { cell, row } = Astro.props;
 const diff = diffAgainstBaseline(cell, row);
+const nullResult = nullResultFor(cell, row);
 ---
+{nullResult && (
+  <aside class="null-result">
+    <h3>Premise not engaged — published as a null result</h3>
+    <p>{nullResult}</p>
+    <p class="null-result__note">
+      This cell differs from its baseline, but not on the <code>{row.premise}</code> dimension
+      this row exists to demonstrate — the integrity gate re-derives that on every build and
+      will not let this disclosure be dropped while it stays true, or kept once it isn't.
+    </p>
+  </aside>
+)}
 <dl class="prov">
   <dt>Arm</dt><dd>{armLabel(cell.arm, cell.method.kind)}</dd>
   <dt>Method</dt><dd><code>{methodChip(cell.method)}</code></dd>
