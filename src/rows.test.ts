@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROWS, FAMILIES, rowsForPhase, getRow } from "./rows";
+import type { ArmDecl } from "./rows";
 import { FIXTURE_NAMES } from "./fixtures";
 
 describe("rows", () => {
@@ -78,12 +79,19 @@ describe("rows", () => {
     // succeed (push growing it, splice shortening/reordering it, sort/reverse
     // reordering it). Assert the observable consequences, not Object.isFrozen,
     // and confirm a row-0 mutation attempt never touches row 1's arms.
+    //
+    // `RowDecl["arms"]` is `readonly`, which stops these calls at compile time.
+    // That is a different guarantee from the one under test here: the callers
+    // that matter are the untyped `.mjs` pipeline scripts and any JS consumer,
+    // for whom the type is not enforcement at all. Widening back to a mutable
+    // array is what lets this test make the call such a caller really can.
+    const mutable = (arms: readonly ArmDecl[]) => arms as ArmDecl[];
     const row0ArmsBefore = ROWS[0].arms.map((a) => a.arm);
     const row1Length = ROWS[1].arms.length;
     const row1ArmsBefore = ROWS[1].arms.map((a) => a.arm);
 
     try {
-      ROWS[0].arms.push({ arm: "C", kind: "tool", method: "INJECTED" });
+      mutable(ROWS[0].arms).push({ arm: "C", kind: "tool", method: "INJECTED" });
     } catch {
       // frozen arrays throw on push in strict mode — fine either way, checked below
     }
@@ -91,7 +99,7 @@ describe("rows", () => {
     expect(ROWS[0].arms.map((a) => a.arm)).toEqual(row0ArmsBefore);
 
     try {
-      ROWS[0].arms.splice(0, 1);
+      mutable(ROWS[0].arms).splice(0, 1);
     } catch {
       // frozen arrays throw on splice in strict mode — fine either way, checked below
     }
@@ -99,14 +107,14 @@ describe("rows", () => {
     expect(ROWS[0].arms.map((a) => a.arm)).toEqual(row0ArmsBefore);
 
     try {
-      ROWS[0].arms.sort((a, b) => (a.arm < b.arm ? 1 : -1));
+      mutable(ROWS[0].arms).sort((a, b) => (a.arm < b.arm ? 1 : -1));
     } catch {
       // frozen arrays throw on sort in strict mode — fine either way, checked below
     }
     expect(ROWS[0].arms.map((a) => a.arm)).toEqual(row0ArmsBefore);
 
     try {
-      ROWS[0].arms.reverse();
+      mutable(ROWS[0].arms).reverse();
     } catch {
       // frozen arrays throw on reverse in strict mode — fine either way, checked below
     }

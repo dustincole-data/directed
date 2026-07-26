@@ -241,6 +241,51 @@ sets — `refine`/`from-scratch` and `default`/`skill`/`tool` — with **no case
 coercion**. `Skill`, `Refine`, or `DEFAULT` is rejected outright, not
 corrected for you.
 
+## Declaring the row's premise (do this before generating a treated arm)
+
+Every row in `src/rows.json` that will carry a B or C cell must name a
+`premise` — the id of a probe in `scripts/premise.mjs`. The probe reduces a
+`render.svg` to just the dimension the row's title claims to demonstrate, and
+the integrity gate (**check 12**) fails any treated arm whose probe value is
+identical to its Arm A baseline's.
+
+This exists because Phase 1 shipped three cells that changed something real but
+never the thing their row is about — `mark-07-overlap.B` and `.C` recoloured
+and relabelled while leaving every circle's position and opacity byte-identical,
+and `type-04-numerals.B` deleted annotations without touching numeral
+formatting. All three passed every other check, because every other check asks
+whether a cell is well-formed and honestly provenanced, not whether it is
+*about* what its row says it is about.
+
+A row with no `premise` blocks its own treated cells:
+
+```
+FAIL <row>.B: src/rows.json declares no premise probe for row "<row>" —
+     a treated cell cannot be checked against a lever its row never names
+```
+
+so declare it before you generate, not after. The probes available today:
+
+| `premise` | Reads | Use for rows about |
+|---|---|---|
+| `font-family` | the set of font stacks in play | typeface choice |
+| `font-size` | the set of size tiers (not their frequency) | type scale and hierarchy |
+| `numeric-format` | `font-variant-numeric` / `font-feature-settings` / family, on digit-bearing text only | tabular vs. proportional figures |
+| `color` | every fill / stroke / stop-colour, in document order | palettes, ramps, accent discipline |
+| `gradient` | gradient parameters and stop ramps, ignoring `id` | gradient treatment |
+| `mark-geometry` | position, size and opacity of every mark, in draw order | overplotting, jitter, ordering, size encoding |
+| `element-composition` | the tag census — what the chart is built out of | construction strategy, faceting |
+
+If no existing probe reads the dimension your row is about, add one to
+`scripts/premise.mjs` **with its own tests first**. The property that makes a
+probe honest is what it *ignores*: a probe that responds to any incidental
+change would have passed `mark-07-overlap.B` on its recolour alone, which is
+the whole failure being closed. Every probe in `scripts/premise.test.mjs` is
+tested for what it must not react to, not only for what it must catch.
+
+A passing probe is a floor, never a verdict. It proves the lever moved; it
+cannot prove it moved *well*. That judgement stays human.
+
 For a `refine`-mode row, arms B and C must pass `--ran-on` set to **exactly**
 `<row>.A` — the row id, a literal period, and an uppercase `A`, nothing else.
 `verify-cells.mjs` rejects a bare row id, a `.B`/`.C` suffix, and a lowercase

@@ -17,10 +17,25 @@ const ROW = "type-01-typeface"; // a real declared Phase-1 row — needed to exe
 // check 3/4/5 against real row/fixture declarations — but its generated
 // artifacts here live only under the scratch ROOT, never under cells/type-01-typeface.
 const DIR = `${ROOT}/${ROW}/A`;
+// type-01-typeface declares premise "font-family", so a seeded cell has to
+// render at least one labelled element for check 12 to have anything to read —
+// a baseline with no text at all would probe identically to every treated arm.
 const CHART = `export const meta={fixture:"table12",width:200,height:100};
 export function render(svg,data){const d=svg.ownerDocument;
 for(const[i,r]of data.rows.entries()){const e=d.createElementNS("http://www.w3.org/2000/svg","rect");
-e.setAttribute("x",String(i*16));e.setAttribute("height",String(r.value));svg.appendChild(e);}}`;
+e.setAttribute("x",String(i*16));e.setAttribute("height",String(r.value));svg.appendChild(e);
+const t=d.createElementNS("http://www.w3.org/2000/svg","text");
+t.setAttribute("font-family","Helvetica, Arial, sans-serif");t.textContent=r.label;svg.appendChild(t);}}`;
+
+/** A treated module that moves the declared premise (a different font stack). */
+const CHART_TREATED = CHART.replace("Helvetica, Arial, sans-serif", "Georgia, serif");
+
+/** A treated module that changes something real, but not the declared premise —
+ *  the shape of every cell check 12 exists to catch. */
+const CHART_OFF_PREMISE = CHART.replace(
+  'e.setAttribute("x",String(i*16));',
+  'e.setAttribute("x",String(i*16));e.setAttribute("fill","#d55181");',
+);
 
 // A visibly different module, used to prove that swapping one arm's render.svg
 // for another arm's is caught.
@@ -63,11 +78,12 @@ async function forgeManifest(cellDir, mutate) {
 }
 
 /** A fully valid refine-mode Arm B cell alongside the seeded baseline, with the
- *  lineage under test. */
-async function writeRefineB(ranOn) {
+ *  lineage under test. Defaults to a module that genuinely moves the row's
+ *  declared premise, because "fully valid" now includes clearing check 12. */
+async function writeRefineB(ranOn, code = CHART_TREATED) {
   const bDir = `${ROOT}/${ROW}/B`;
   await mkdir(bDir, { recursive: true });
-  await writeFile(`${bDir}/chart.js`, CHART);
+  await writeFile(`${bDir}/chart.js`, code);
   await renderCell(bDir);
   await writeCellManifest({
     cellDir: bDir, row: ROW, rowTitle: "Typeface", family: "type", arm: "B",
@@ -88,6 +104,7 @@ afterAll(async () => {
   await rm(`${ROOT}/${ROW}`, { recursive: true, force: true });
   await rm(`${ROOT}/mark-04-glow`, { recursive: true, force: true });
   await rm(`${ROOT}/type-04-numerals`, { recursive: true, force: true });
+  await rm(`${ROOT}/type-03-weight`, { recursive: true, force: true });
 });
 
 describe("verifyCells", () => {
@@ -366,5 +383,54 @@ describe("verifyCells check 8/9/10 — cell.json is cross-validated, not self-ce
     expect(ok).toBe(false);
     expect(failures.join()).toContain('manifest rowTitle "Numerals" contradicts src/rows.json');
     expect(failures.join()).toContain('manifest family "layout" contradicts src/rows.json');
+  });
+});
+
+// Every check above asks whether a cell is well-formed and honestly provenanced.
+// None of them asks whether it is *about* what its row says it is about — so
+// 3 of Phase 1's 15 treated cells shipped a lever that was never pulled
+// (mark-07-overlap.B and .C, type-04-numerals.B) and passed the whole gate.
+describe("verifyCells check 12 — a treated arm must move its row's declared premise", () => {
+  it("fails when a treated arm's probe is identical to its baseline's", async () => {
+    // Recolours the bars and touches nothing else: a real edit, a real hash
+    // change, a real render change — and no engagement with "Typeface".
+    await writeRefineB(`${ROW}.A`, CHART_OFF_PREMISE);
+    const { ok, failures } = await verifyCells({ cellsDir: ROOT });
+    expect(ok).toBe(false);
+    expect(failures.join()).toContain(`${ROW}.B: premise not engaged`);
+    expect(failures.join()).toContain('"font-family" probe is identical');
+  });
+
+  it("passes when the treated arm moves the dimension the row declares", async () => {
+    await writeRefineB(`${ROW}.A`, CHART_TREATED);
+    const { ok, failures } = await verifyCells({ cellsDir: ROOT });
+    expect(failures.join()).not.toMatch(/premise/i);
+    expect(ok).toBe(true);
+  });
+
+  it("fails when a row carrying a treated cell declares no premise probe", async () => {
+    // type-03-weight is a real declared row that has not been generated yet and
+    // therefore names no premise. Generating into it must be blocked, not
+    // silently unverified — this is what makes the check a Phase 2 gate rather
+    // than a one-off audit of the rows that happen to declare a probe.
+    const row = "type-03-weight";
+    for (const [arm, code] of [["A", CHART], ["B", CHART_TREATED]]) {
+      const d = `${ROOT}/${row}/${arm}`;
+      await mkdir(d, { recursive: true });
+      await writeFile(`${d}/chart.js`, code);
+      await renderCell(d);
+      await writeCellManifest({
+        cellDir: d, row, rowTitle: "Weight and contrast", family: "type", arm,
+        mode: "refine",
+        method: arm === "A"
+          ? { kind: "default", name: "clean subagent, naive prompt", args: "", ranOn: null }
+          : { kind: "skill", name: "/impeccable typeset", args: "", ranOn: `${row}.A` },
+        prompt: arm === "A" ? PROMPT_A : PROMPT_B, fixture: "table12",
+      });
+    }
+    const { ok, failures } = await verifyCells({ cellsDir: ROOT });
+    expect(ok).toBe(false);
+    expect(failures.join()).toContain(`${row}.B: src/rows.json declares no premise probe`);
+    await rm(`${ROOT}/${row}`, { recursive: true, force: true });
   });
 });

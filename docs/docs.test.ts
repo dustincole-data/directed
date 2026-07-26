@@ -51,6 +51,15 @@ describe("factory runbook", () => {
     expect(factory).toContain("^[a-z]+-\\d{2}-[a-z0-9-]+$");
     expect(factory).toMatch(/rows\.json`?\s+is\s+the\s+authority/);
   });
+
+  // The runbook is what the next generation session reads. A row with no
+  // `premise` now blocks its own treated cells at the gate, so a runbook that
+  // doesn't say so sends that session into an avoidable failure.
+  it("requires a row to declare a premise probe before its treated cells are generated", () => {
+    expect(factory).toMatch(/premise/i);
+    expect(factory).toContain("scripts/premise.mjs");
+    expect(factory).toMatch(/check 12/i);
+  });
 });
 
 describe("method draft", () => {
@@ -74,5 +83,16 @@ describe("method draft", () => {
   it("discloses that Phase 2's prompts differ from Phase 1's", () => {
     expect(method).toMatch(/Phase 1 \/ Phase 2 prompt difference/i);
     expect(method).toMatch(/byte-stable/i);
+  });
+
+  // /method is what a reader sees. Three Phase 1 cells are published under a
+  // row title whose lever they never pulled; a methodology page that omits
+  // them lets the gallery's strongest claim — "the difference is exact and
+  // independently verifiable" — cover cells where there is no difference.
+  it("names the cells whose stated premise was never engaged", () => {
+    expect(method).toMatch(/premise/i);
+    for (const cell of ["mark-07-overlap.B", "mark-07-overlap.C", "type-04-numerals.B"]) {
+      expect(method, `undisclosed null-result cell: ${cell}`).toContain(cell);
+    }
   });
 });

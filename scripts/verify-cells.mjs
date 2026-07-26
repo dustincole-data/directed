@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { sha256OfFile } from "./new-cell.mjs";
 import { buildRegistry } from "./build-registry.mjs";
 import { renderCell, loadCellModule } from "./render-cell.mjs";
+import { probeSvg } from "./premise.mjs";
 
 const PLACEHOLDER = /\b(TBD|TODO|FIXME|lorem ipsum)\b/i;
 const METHOD_KINDS = new Set(["default", "skill", "tool"]);
@@ -261,6 +262,45 @@ export async function verifyCells({ cellsDir = "cells" } = {}) {
           failures.push(
             `${tag}: render.svg is not what chart.js renders — the published SVG was hand-edited or substituted`,
           );
+        }
+      }
+    }
+
+    // ---- check 12: the treated arm must move its row's declared premise ----
+    //
+    // Every check above asks whether a cell is well-formed and honestly
+    // provenanced. None asks whether it is *about* what its row claims — so
+    // 3 of Phase 1's 15 treated cells shipped a lever that was never pulled
+    // (`mark-07-overlap.B`/`.C` left every circle's position and opacity
+    // byte-identical while recolouring; `type-04-numerals.B` deleted
+    // annotations without touching numeral formatting) and passed the entire
+    // gate. A gallery whose value proposition is "the difference is exact and
+    // independently verifiable" cannot publish a cell whose stated difference
+    // is absent.
+    //
+    // The probe is a floor, not a verdict: it proves the lever moved, never
+    // that it moved well. Quality stays a human judgement — this only stops a
+    // null result being published as a demonstration.
+    if (arm !== "A" && !decl.gap) {
+      const basePath = join(CELLS, row, "A", "render.svg");
+      const ownPath = join(dir, "render.svg");
+      if (!decl.premise) {
+        // Blocking an undeclared premise is what makes this a gate on new
+        // generation rather than an audit of the rows that happen to name one.
+        failures.push(
+          `${tag}: src/rows.json declares no premise probe for row "${row}" — a treated cell cannot be checked against a lever its row never names`,
+        );
+      } else if ((await exists(basePath)) && (await exists(ownPath))) {
+        try {
+          const base = probeSvg(decl.premise, await readFile(basePath, "utf8"));
+          const own = probeSvg(decl.premise, await readFile(ownPath, "utf8"));
+          if (base === own) {
+            failures.push(
+              `${tag}: premise not engaged — its "${decl.premise}" probe is identical to ${row}.A's, so the lever this row exists to demonstrate was never pulled`,
+            );
+          }
+        } catch (err) {
+          failures.push(`${tag}: premise probe "${decl.premise}" failed — ${err.message}`);
         }
       }
     }

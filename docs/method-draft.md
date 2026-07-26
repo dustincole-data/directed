@@ -103,6 +103,33 @@ export to Illustrator"; and "the annotation layer is what defines editorial
 graphics." Each failed a three-vote adversarial check. Failing is not proof of
 falsehood — it means this project does not rely on them.
 
+## Three cells whose premise was never engaged
+
+Every treated cell in Phase 1 differs from its baseline. Three of the fifteen
+do not differ *in the dimension their row's title names*, which is a weaker
+result than the row claims:
+
+- **`mark-07-overlap.B`** and **`mark-07-overlap.C`** — the row is "Overplotting:
+  opacity, jitter, ordering". Both treated arms leave every circle's `cx`, `cy`,
+  `r` and `fill-opacity` byte-identical to Arm A. B recolours the marks and
+  thickens their stroke; C collapses five secondary text greys into one. Both
+  are real edits. Neither is an overplotting edit, and the row misses its stated
+  premise on both of its treated arms.
+- **`type-04-numerals.B`** — the row is "Tabular vs proportional figures".
+  Neither arm uses `font-variant-numeric` or a tabular-figure font; both use the
+  same Helvetica stack. The real change is a cut from 24 numeric annotations to
+  2 — an annotation-density result wearing a numerals label.
+
+These passed the Phase 1 gate: every check it ran asked whether a cell was
+well-formed and honestly provenanced, and none asked whether it engaged the
+lever its row exists to demonstrate. The gate now runs a **premise probe**
+(check 12) that compares each treated arm against its baseline on exactly that
+dimension, and fails when the two are identical. Run against the committed
+Phase 1 tree it flags these three cells and no others.
+
+A probe can only prove a lever moved — never that it moved well. It is a floor
+under the claim these pages make, not a judgement of the design.
+
 ## Not a benchmark
 
 No scores. No winner declared per row. Some rows will show almost no

@@ -12,8 +12,15 @@ export type RowDecl = {
   title: string;
   mode: Mode;
   fixture: FixtureName;
+  /** Probe id the integrity gate uses to prove a treated arm moved this row's
+   *  stated lever. Required before the row's treated cells can be generated;
+   *  absent on rows that have not been generated yet. See scripts/premise.mjs. */
+  premise?: string;
   phase: 1 | 2 | 3;
-  arms: ArmDecl[];
+  // readonly because the rows below are deep-frozen: `Object.freeze` widens the
+  // arms array to `readonly ArmDecl[]`, which is not assignable to a mutable
+  // `ArmDecl[]`. Declaring the immutability that already exists is the fix.
+  arms: readonly ArmDecl[];
   gap?: string;
 };
 

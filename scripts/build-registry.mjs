@@ -54,7 +54,7 @@ export async function buildRegistry({ cellsDir = "cells" } = {}) {
     cells.sort((x, y) => x.arm.localeCompare(y.arm));
     outRows.push({
       id: r.id, title: r.title, family: r.family, mode: r.mode,
-      fixture: r.fixture, phase: r.phase, gap: r.gap ?? null,
+      fixture: r.fixture, premise: r.premise ?? null, phase: r.phase, gap: r.gap ?? null,
       declaredArms: r.arms, cells,
     });
   }

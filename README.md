@@ -8,8 +8,9 @@ Ships to `directed.dustincoledata.com`. Full concept, row inventory, and archite
 
 ```bash
 npm test              # vitest — unit + integration tests
-npm run verify:cells  # integrity gate: every committed cell is well-formed and unmodified
-npm run build          # verify:cells -> build registry -> astro build (static site)
+npm run verify:cells  # integrity gate: every committed cell is well-formed, unmodified, and on-premise
+npm run typecheck     # tsc --noEmit
+npm run build          # typecheck -> verify:cells -> build registry -> astro build (static site)
 ```
 
 `npm run dev` / `npx astro preview` serve the site locally; the build never executes generated chart code at request time — cells are pre-rendered to SVG (`scripts/render-cell.mjs`) and inlined.
@@ -17,6 +18,10 @@ npm run build          # verify:cells -> build registry -> astro build (static s
 ## Immutability
 
 Everything under `cells/` is generated, not edited. On every build, `verify-cells.mjs` checks all three of a cell's files: `chart.js` against the hash recorded in `cell.json` at generation time, `render.svg` against a fresh re-render of that `chart.js`, and every `cell.json` field against `src/rows.json`, the directory the cell lives at, and `chart.js`'s own `meta`. Hand-editing any of the three after generation fails the build. What that does *not* prove is that a cell was machine-generated in the first place — the hash says "unchanged since it was registered", so the diff that introduces a cell is still worth reading. If a cell is wrong, it's regenerated as a new version; the original stays. The only permitted post-generation edits (applied uniformly, disclosed on `/method`) are injecting the shared dataset import, injecting the shared mount point, and stripping a hardcoded page background.
+
+## Premise engagement
+
+Immutability proves a cell is the artifact it says it is. It does not prove the cell is *about* what its row says it is about — and three of Phase 1's fifteen treated cells were not, while passing every check (see `/method`). So each row in `src/rows.json` also names a `premise`: a probe in `scripts/premise.mjs` that reduces a `render.svg` to just the dimension the row's title claims to demonstrate. The gate fails any treated arm whose probe value is identical to its Arm A baseline's, and fails any row that carries a treated cell without declaring a probe at all. A probe proves the lever moved; it cannot prove it moved well, and no check in this repo tries to.
 
 The gate runs on `npm run build` — including the deploy build — and standalone via `npm run verify:cells`. There is no CI workflow and no pre-commit hook (this repo has no remote yet).
 

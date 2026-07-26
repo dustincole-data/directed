@@ -8,8 +8,16 @@ describe("scaffold", () => {
   });
 
   it("declares the cell pipeline scripts", () => {
-    for (const s of ["render:cell", "build:registry", "verify:cells", "test", "build"]) {
+    for (const s of ["render:cell", "build:registry", "verify:cells", "typecheck", "test", "build"] as const) {
       expect(pkg.scripts[s], `missing script: ${s}`).toBeTruthy();
     }
+  });
+
+  it("runs the integrity gate and the typecheck as part of the build", () => {
+    // Astro and Vite never typecheck, and nothing else runs verify:cells, so
+    // the build script is the only enforcement point this repo has until it
+    // gets a git remote and a CI workflow.
+    expect(pkg.scripts.build).toContain("verify:cells");
+    expect(pkg.scripts.build).toContain("typecheck");
   });
 });

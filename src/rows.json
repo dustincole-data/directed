@@ -5,6 +5,7 @@
     "title": "Typeface",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "font-family",
     "phase": 1,
     "arms": [
       {
@@ -30,6 +31,7 @@
     "title": "Type scale and size hierarchy",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "font-size",
     "phase": 1,
     "arms": [
       {
@@ -75,6 +77,7 @@
     "title": "Tabular vs proportional figures",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "numeric-format",
     "phase": 1,
     "arms": [
       {
@@ -115,6 +118,7 @@
     "title": "Categorical palette",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "color",
     "phase": 1,
     "arms": [
       {
@@ -165,6 +169,7 @@
     "title": "Diverging scale, spectral within poles",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "color",
     "phase": 1,
     "arms": [
       {
@@ -235,6 +240,7 @@
     "title": "Accent vs neutral discipline",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "color",
     "phase": 1,
     "arms": [
       {
@@ -255,6 +261,7 @@
     "title": "Default rect/circle vs designed custom mark",
     "mode": "from-scratch",
     "fixture": "hero8",
+    "premise": "element-composition",
     "phase": 1,
     "arms": [
       {
@@ -280,6 +287,7 @@
     "title": "Flat fill vs one radialGradient per datum",
     "mode": "refine",
     "fixture": "hero8",
+    "premise": "gradient",
     "phase": 1,
     "arms": [
       {
@@ -377,6 +385,7 @@
     "title": "Overplotting: opacity, jitter, ordering",
     "mode": "refine",
     "fixture": "hero8",
+    "premise": "mark-geometry",
     "phase": 1,
     "arms": [
       {
