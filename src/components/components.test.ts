@@ -4,9 +4,17 @@ import { armLabel, methodChip, modeBadge } from "../lib/labels";
 
 describe("labels", () => {
   it("names arms in reader language, not internal letters alone", () => {
-    expect(armLabel("A")).toBe("A · Claude default");
-    expect(armLabel("B")).toBe("B · with a skill");
-    expect(armLabel("C")).toBe("C · with a tool");
+    expect(armLabel("A", "default")).toBe("A · Claude default");
+    expect(armLabel("B", "skill")).toBe("B · with a skill");
+    expect(armLabel("C", "tool")).toBe("C · with a tool");
+  });
+
+  // src/rows.json declares 6 Arm C cells as skills and 5 Arm B cells as tools.
+  // Deriving the caption from the arm letter captioned those cells with a method
+  // they contradict — and this test used to pin that mapping with toBe.
+  it("captions the method the cell actually records, not the one its letter implies", () => {
+    expect(armLabel("C", "skill")).toBe("C · with a skill");
+    expect(armLabel("B", "tool")).toBe("B · with a tool");
   });
 
   it("chips a skill method with its exact invocation", () => {

@@ -6,7 +6,7 @@ const { cell, row } = Astro.props;
 const diff = diffAgainstBaseline(cell, row);
 ---
 <dl class="prov">
-  <dt>Arm</dt><dd>{armLabel(cell.arm)}</dd>
+  <dt>Arm</dt><dd>{armLabel(cell.arm, cell.method.kind)}</dd>
   <dt>Method</dt><dd><code>{methodChip(cell.method)}</code></dd>
   {cell.method.ranOn && <><dt>Ran on</dt><dd><a href={`/cell/${cell.method.ranOn}`}>{cell.method.ranOn}</a></dd></>}
   <dt>Mode</dt><dd>{modeBadge(row.mode)}</dd>
