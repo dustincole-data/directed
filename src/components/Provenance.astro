@@ -1,0 +1,25 @@
+---
+// src/components/Provenance.astro
+import { methodChip, armLabel, modeBadge } from "../lib/labels";
+import { diffAgainstBaseline } from "../lib/registry";
+const { cell, row } = Astro.props;
+const diff = diffAgainstBaseline(cell, row);
+---
+<dl class="prov">
+  <dt>Arm</dt><dd>{armLabel(cell.arm)}</dd>
+  <dt>Method</dt><dd><code>{methodChip(cell.method)}</code></dd>
+  {cell.method.ranOn && <><dt>Ran on</dt><dd><a href={`/cell/${cell.method.ranOn}`}>{cell.method.ranOn}</a></dd></>}
+  <dt>Mode</dt><dd>{modeBadge(row.mode)}</dd>
+  <dt>Fixture</dt><dd><code>{row.fixture}</code></dd>
+  <dt>Runs</dt><dd>{cell.runs} · shipped: {cell.shipped}</dd>
+  <dt>Generated</dt><dd>{cell.generated}</dd>
+</dl>
+<h3>Verbatim prompt</h3>
+<pre class="prov__prompt">{cell.prompt}</pre>
+{diff && (
+  <>
+    <h3>Structural change vs the default arm</h3>
+    <p>Added: {diff.added.length ? diff.added.join(", ") : "nothing"}.
+       Removed: {diff.removed.length ? diff.removed.join(", ") : "nothing"}.</p>
+  </>
+)}

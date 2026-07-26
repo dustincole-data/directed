@@ -9,6 +9,7 @@
     "predev": "node scripts/build-registry.mjs",
     "dev": "astro dev",
     "build": "npm run verify:cells && npm run build:registry && astro build",
+    "pretest": "node scripts/build-registry.mjs",
     "test": "vitest run",
     "render:cell": "node scripts/render-cell.mjs",
     "build:registry": "node scripts/build-registry.mjs",

@@ -1,0 +1,16 @@
+---
+// src/pages/cell/[id].astro
+import Base from "../../layouts/Base.astro";
+import Provenance from "../../components/Provenance.astro";
+import { allCells } from "../../lib/registry";
+
+export function getStaticPaths() {
+  return allCells().map(({ cell, row }) => ({ params: { id: cell.id }, props: { cell, row } }));
+}
+const { cell, row } = Astro.props;
+---
+<Base title={`${row.title} — ${cell.id} — Directed`}>
+  <p><a href={`/#${row.id}`}>← {row.title}</a></p>
+  <div class="swatch__render" set:html={cell.svg} />
+  <Provenance cell={cell} row={row} />
+</Base>

@@ -29,3 +29,10 @@ body { margin: 0; background: var(--bg); color: var(--ink);
 .swatch__arm { font-weight: 600; color: var(--ink); }
 .gap { border: 1px dashed var(--rule); padding: 1rem; font-size: .8125rem; color: var(--muted); }
 .gap h4 { margin: 0 0 .5rem; color: var(--ink); }
+.prov { margin: 1.5rem 0 0; display: grid; grid-template-columns: max-content 1fr;
+  gap: .25rem 1rem; font-size: .875rem; }
+.prov dt { font-weight: 600; color: var(--ink); }
+.prov dd { margin: 0; color: var(--muted); }
+.prov__prompt { overflow-x: auto; border: 1px solid var(--rule); background: #fff;
+  padding: 1rem; margin: .5rem 0 1.5rem; white-space: pre;
+  font: 400 .8125rem/1.5 ui-monospace, "SFMono-Regular", Consolas, monospace; }
