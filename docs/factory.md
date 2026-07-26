@@ -31,10 +31,8 @@ neutral statement of what the columns are — nothing about how to chart them.
 
 - **table12** — "12 countries' life expectancy at birth in years, and each
   country's difference from the World Bank world baseline of 73.48 years."
-- **hero8** — "the eight planets, each with diameter in kilometres and
-  distance from the sun in astronomical units; each row also carries a color
-  that does not encode any measured value, included only to tell planets
-  apart."
+- **hero8** — "the eight planets, with equatorial diameter in km and mean
+  distance from the Sun in AU."
 - **cycle12** — "12 months of daylight hours at 40°N latitude, and each
   month's difference from the 12-hour equinox baseline." Not used by any of
   Phase 1's nine rows.

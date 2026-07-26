@@ -1,0 +1,12 @@
+# Generated cell artifacts must round-trip through checkout unchanged.
+# chart.js is hash-verified against cell.json's codeSha256 (verify-cells.mjs
+# check 6) — if a checkout on a CRLF-defaulting platform silently rewrites
+# its line endings, the hash check false-positives as "code was edited after
+# generation" even though nothing changed. Force LF regardless of the
+# checking-out machine's core.autocrlf. cell.json and render.svg aren't
+# hashed, but they're generated in the same pass and travel with chart.js —
+# forcing LF on them too keeps the whole cell bundle internally consistent
+# and avoids one file in a cell silently differing from its siblings.
+cells/**/chart.js text eol=lf
+cells/**/cell.json text eol=lf
+cells/**/render.svg text eol=lf
