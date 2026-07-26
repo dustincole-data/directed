@@ -7,6 +7,15 @@ import { renderCell, loadCellModule } from "./render-cell.mjs";
 const PLACEHOLDER = /\b(TBD|TODO|FIXME|lorem ipsum)\b/i;
 const METHOD_KINDS = new Set(["default", "skill", "tool"]);
 
+// Check 10 compares a recorded prompt against files on disk. A checkout can
+// legitimately rewrite line endings — `core.autocrlf=true` is this machine's
+// setting, and `.gitattributes` pins LF only under `cells/`, so a fresh clone
+// hands us CRLF fixtures against an LF-recorded prompt. That is a checkout
+// artifact, not tampering, so both sides are normalised before comparing. (The
+// hash check and the render comparison are deliberately byte-exact; those files
+// *are* pinned to LF.)
+const lf = (s) => s.replace(/\r\n/g, "\n");
+
 async function exists(p) {
   try {
     await stat(p);
@@ -204,11 +213,11 @@ export async function verifyCells({ cellsDir = "cells" } = {}) {
     // refine-mode treated arm is sent its baseline's module verbatim, and every
     // other arm is sent the fixture JSON verbatim. Both of those are files the
     // gate can read, so a prompt rewritten after the fact no longer matches.
-    const prompt = String(m.prompt ?? ""); // check 2 already reports it empty
+    const prompt = lf(String(m.prompt ?? "")); // check 2 already reports it empty
     if (arm !== "A" && decl.mode === "refine") {
       const basePath = join(CELLS, row, "A", "chart.js");
       if (await exists(basePath)) {
-        const baseCode = (await readFile(basePath, "utf8")).trim();
+        const baseCode = lf(await readFile(basePath, "utf8")).trim();
         if (!prompt.includes(baseCode)) {
           failures.push(
             `${tag}: prompt does not contain "${row}.A"'s chart.js verbatim — a refine arm is sent its baseline module, so the recorded prompt is not the prompt that was run`,
@@ -218,7 +227,7 @@ export async function verifyCells({ cellsDir = "cells" } = {}) {
     } else {
       const fixturePath = resolve(`src/fixtures/${decl.fixture}.json`);
       if (await exists(fixturePath)) {
-        const fixtureText = (await readFile(fixturePath, "utf8")).trim();
+        const fixtureText = lf(await readFile(fixturePath, "utf8")).trim();
         if (!prompt.includes(fixtureText)) {
           failures.push(
             `${tag}: prompt does not contain the "${decl.fixture}" fixture JSON verbatim — every non-refine arm is sent the dataset inline, so the recorded prompt is not the prompt that was run`,

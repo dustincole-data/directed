@@ -10,3 +10,10 @@
 cells/**/chart.js text eol=lf
 cells/**/cell.json text eol=lf
 cells/**/render.svg text eol=lf
+
+# The fixture JSON is embedded verbatim in every baseline's recorded prompt, and
+# the gate (check 10) reads the file back to confirm that. The check normalises
+# line endings so a CRLF checkout is not mistaken for a rewritten prompt, but the
+# fixtures should still round-trip unchanged — they are the datasets every
+# comparison in the gallery rests on.
+src/fixtures/*.json text eol=lf
