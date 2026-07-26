@@ -120,12 +120,19 @@ Run **exactly once**. The tool loop is real, not simulated:
 starts with `/`** (e.g. `/impeccable typeset`) into a filesystem path (e.g.
 `C:/Program Files/Git/impeccable typeset`) — every `/impeccable …` method
 name in `src/rows.json` is at risk. Always export `MSYS_NO_PATHCONV=1` first
-and re-check the printed `method.name` in the command output:
+and re-check the printed `method.name` in the command output.
+
+**`MSYS_NO_PATHCONV=1` has a second-order effect: it also stops MSYS from
+translating any other Unix-style path on the same command line** — including
+`--prompt-file`. Give `--prompt-file` in Windows form (`C:/Users/...`,
+forward slashes are fine) whenever `MSYS_NO_PATHCONV=1` is set; a
+`$SCRATCH`-relative Unix-style path (`/c/Users/...`) will resolve wrong and
+`new-cell.mjs` will fail with `ENOENT`:
 
 ```bash
 node scripts/render-cell.mjs cells/<row>/<arm>
 MSYS_NO_PATHCONV=1 node scripts/new-cell.mjs \
-  --row <row> --arm <A|B|C> --prompt-file $SCRATCH/prompt.txt \
+  --row <row> --arm <A|B|C> --prompt-file C:/Users/you/path/to/prompt.txt \
   --mode <refine|from-scratch> --method-kind <default|skill|tool> \
   --method-name "<exact invocation>" --fixture <table12|hero8|cycle12> \
   [--method-args "<text>"] [--ran-on <row>.A] [--notes "<text>"] \
