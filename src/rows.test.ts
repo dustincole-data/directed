@@ -58,4 +58,19 @@ describe("rows", () => {
     expect(glow.arms).toHaveLength(1);
     expect(glow.gap!.length).toBeGreaterThan(20);
   });
+
+  it("the shared arm-A object is frozen, so mutating one row's arms[0] cannot corrupt another row's", () => {
+    const before = ROWS[0].arms[0].method;
+    expect(ROWS[1].arms[0].method).toBe(before); // same shared reference, sanity check
+
+    try {
+      (ROWS[0].arms[0] as { method: string }).method = "MUTATED";
+    } catch {
+      // strict-mode ESM: assigning to a frozen object throws — that's fine, either way nothing changes below
+    }
+
+    expect(ROWS[0].arms[0].method).toBe(before);
+    expect(ROWS[1].arms[0].method).toBe(before);
+    expect(ROWS[1].arms[0].method).not.toBe("MUTATED");
+  });
 });

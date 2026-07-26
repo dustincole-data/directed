@@ -16,7 +16,7 @@ export type RowDecl = {
   gap?: string;
 };
 
-const A: ArmDecl = { arm: "A", kind: "default", method: "clean subagent, naive prompt" };
+const A: ArmDecl = Object.freeze({ arm: "A", kind: "default", method: "clean subagent, naive prompt" });
 
 export const ROWS: RowDecl[] = [
   // ---- Family 1: type ----
