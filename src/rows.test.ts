@@ -72,5 +72,48 @@ describe("rows", () => {
     expect(ROWS[0].arms[0].method).toBe(before);
     expect(ROWS[1].arms[0].method).toBe(before);
     expect(ROWS[1].arms[0].method).not.toBe("MUTATED");
+
+    // The `arms` array container itself must also be frozen — not just its
+    // elements — so length- and order-changing mutations can't silently
+    // succeed (push growing it, splice shortening/reordering it, sort/reverse
+    // reordering it). Assert the observable consequences, not Object.isFrozen,
+    // and confirm a row-0 mutation attempt never touches row 1's arms.
+    const row0ArmsBefore = ROWS[0].arms.map((a) => a.arm);
+    const row1Length = ROWS[1].arms.length;
+    const row1ArmsBefore = ROWS[1].arms.map((a) => a.arm);
+
+    try {
+      ROWS[0].arms.push({ arm: "C", kind: "tool", method: "INJECTED" });
+    } catch {
+      // frozen arrays throw on push in strict mode — fine either way, checked below
+    }
+    expect(ROWS[0].arms.length).toBe(row0ArmsBefore.length);
+    expect(ROWS[0].arms.map((a) => a.arm)).toEqual(row0ArmsBefore);
+
+    try {
+      ROWS[0].arms.splice(0, 1);
+    } catch {
+      // frozen arrays throw on splice in strict mode — fine either way, checked below
+    }
+    expect(ROWS[0].arms.length).toBe(row0ArmsBefore.length);
+    expect(ROWS[0].arms.map((a) => a.arm)).toEqual(row0ArmsBefore);
+
+    try {
+      ROWS[0].arms.sort((a, b) => (a.arm < b.arm ? 1 : -1));
+    } catch {
+      // frozen arrays throw on sort in strict mode — fine either way, checked below
+    }
+    expect(ROWS[0].arms.map((a) => a.arm)).toEqual(row0ArmsBefore);
+
+    try {
+      ROWS[0].arms.reverse();
+    } catch {
+      // frozen arrays throw on reverse in strict mode — fine either way, checked below
+    }
+    expect(ROWS[0].arms.map((a) => a.arm)).toEqual(row0ArmsBefore);
+
+    // None of the above touched row 1's arms array.
+    expect(ROWS[1].arms.length).toBe(row1Length);
+    expect(ROWS[1].arms.map((a) => a.arm)).toEqual(row1ArmsBefore);
   });
 });

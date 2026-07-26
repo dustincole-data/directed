@@ -20,11 +20,13 @@ export type RowDecl = {
 // Row data lives in ./rows.json (checked in, plain data) so the build never
 // depends on stripping TypeScript out of this file at runtime. This module's
 // job is just to type it and freeze it. JSON.parse gives every row's arms
-// fresh objects (no accidental cross-row sharing), and we freeze each one so
-// mutating one row's arm can never be observed anywhere else — matching the
-// guarantee the previous shared-frozen-A constant provided.
+// fresh objects (no accidental cross-row sharing). We freeze each arm object,
+// the arms array itself (so push/splice/sort/reverse can't resize or reorder
+// it), and the row object, so mutating one row's arm list can never be
+// observed anywhere else — matching the guarantee the previous
+// shared-frozen-A constant provided.
 export const ROWS: RowDecl[] = (rowsData as RowDecl[]).map((r) =>
-  Object.freeze({ ...r, arms: r.arms.map((a) => Object.freeze({ ...a })) }),
+  Object.freeze({ ...r, arms: Object.freeze(r.arms.map((a) => Object.freeze({ ...a }))) }),
 );
 
 export const FAMILIES = [...new Set(ROWS.map((r) => r.family))];
