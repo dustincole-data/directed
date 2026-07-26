@@ -116,9 +116,15 @@ Run **exactly once**. The tool loop is real, not simulated:
 2. Render, register, and verify, in this order — `new-cell.mjs` hashes
    whatever `chart.js` contains at the moment it runs, so render first:
 
+**Git Bash / MSYS on Windows will silently mangle a `--method-name` that
+starts with `/`** (e.g. `/impeccable typeset`) into a filesystem path (e.g.
+`C:/Program Files/Git/impeccable typeset`) — every `/impeccable …` method
+name in `src/rows.json` is at risk. Always export `MSYS_NO_PATHCONV=1` first
+and re-check the printed `method.name` in the command output:
+
 ```bash
 node scripts/render-cell.mjs cells/<row>/<arm>
-node scripts/new-cell.mjs \
+MSYS_NO_PATHCONV=1 node scripts/new-cell.mjs \
   --row <row> --arm <A|B|C> --prompt-file $SCRATCH/prompt.txt \
   --mode <refine|from-scratch> --method-kind <default|skill|tool> \
   --method-name "<exact invocation>" --fixture <table12|hero8|cycle12> \

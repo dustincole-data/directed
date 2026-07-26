@@ -36,7 +36,15 @@ async function seedValidCell() {
 }
 
 beforeEach(seedValidCell);
-afterAll(async () => { await rm(ROOT, { recursive: true, force: true }); });
+// Scoped to exactly what this suite creates (ROOT/ROW, plus the check-7 gap
+// dir some tests add under ROOT/mark-04-glow and already clean up
+// themselves) — never the whole ROOT. `cells/_vtest/` is a shared scratch
+// root; other things can legitimately live there, and a wholesale
+// `rm(ROOT, ...)` has twice destroyed content this suite doesn't own.
+afterAll(async () => {
+  await rm(`${ROOT}/${ROW}`, { recursive: true, force: true });
+  await rm(`${ROOT}/mark-04-glow`, { recursive: true, force: true });
+});
 
 describe("verifyCells", () => {
   it("passes on a well-formed cell", async () => {
