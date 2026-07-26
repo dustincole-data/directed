@@ -1,8 +1,17 @@
 # Cell generation runbook
 
 Every cell is produced by actually running the method it claims. No cell is
-hand-authored. No cell is hand-edited after generation — `verify-cells.mjs`
-hash-checks `chart.js` against the manifest and fails the build.
+hand-authored. No cell is hand-edited after generation, and `verify-cells.mjs`
+now checks all three of a cell's files, not just one: it hash-checks `chart.js`
+against the manifest, re-renders `chart.js` and byte-compares the result against
+the committed `render.svg`, and cross-validates every field of `cell.json`
+against `src/rows.json`, the directory the cell lives at, and `chart.js`'s own
+`meta`. Any of those failing fails the build.
+
+What that does **not** prove: the hash says "unedited since it was registered",
+not "produced by a machine". A cell hand-authored *before* `new-cell.mjs` ran
+would hash cleanly. Git history is the only witness to that, so review the diff
+that introduces a cell, not just the gate's exit code.
 
 `$SCRATCH` in the commands below is a placeholder for your own session's
 scratch directory (e.g. the path a Claude Code session reports as its
@@ -12,16 +21,34 @@ real path.
 
 ## The contract, given identically to every arm
 
+Reproduced verbatim from `cells/_contract.md` — if the two ever disagree, that
+file is the source of truth:
+
 ```js
-export const meta = { fixture: "table12" | "hero8" | "cycle12", width: 640, height: 400 };
+export const meta = { fixture: "table12" | "hero8" | "cycle12", width: number, height: number };
 export function render(svg, data) { /* mutate the passed <svg> element in place */ }
 ```
 
-`data` is `{ name, source, fetched, baseline, unit, rows }`. No network, no
-`Date.now()`, no `Math.random()`. This is a harness requirement about module
-shape, never a design hint, and it is disclosed on `/method`. It is
-reproduced here verbatim from `cells/_contract.md` — if the two ever
-disagree, that file is the source of truth.
+- `data` is the fixture object: `{ name, source, fetched, baseline, unit, rows }`.
+- `render` receives a real `SVGSVGElement` in a jsdom document. Use `svg.ownerDocument`
+  and `createElementNS`, or a d3 selection over it. Do not call `document` globally.
+- No network. No fonts loaded at render time — reference font families by name only.
+- No `Date.now()`, no `Math.random()`. Renders must be byte-stable across runs.
+
+This is a harness requirement about module shape, never a design hint, and it is
+disclosed on `/method`.
+
+An arm is never handed the contract file itself — it is handed a prompt template
+from this document, which has to carry the same constraints. Phase 1's Arm A
+template dropped three of them ("do not call `document` globally", "no fonts
+loaded at render time", "renders must be byte-stable"). All 24 shipped cells
+satisfy all three anyway — verified — but the templates below now state them, so
+**Phase 2's prompts differ from Phase 1's in exactly that way**, disclosed as a
+methodology change in `docs/method-draft.md`.
+
+Byte-stability is load-bearing, not decorative: the integrity gate re-renders
+every cell and byte-compares the result against the committed `render.svg`, so a
+cell whose render is not reproducible fails the build.
 
 ## Importing a craft helper from a cell
 
@@ -61,15 +88,26 @@ neutral statement of what the columns are — nothing about how to chart them.
 
 ## Arm A — default
 
-Arm A: three runs, keep the median-looking result, record `runs: 3`,
-`shipped: "median"`. Working directory is `$SCRATCH`, **not** this repo, so
+Arm A: three runs, and the median ships — **mechanically, not by eye**. Render
+all three and ship the run with the **median total SVG element count**; break a
+tie with the smaller `chart.js`. Record `runs: 3`,
+`shipped: "median"`, and put the three counts in the task record so the choice is
+reproducible by anyone holding the discarded runs. That reproducibility is the
+whole point: a "median-looking" judgement call would let the prettiest baseline
+ship, which is the claim this gallery exists to disprove. (The gate enforces the
+recorded numbers, not the selection: `runs >= 3` and `shipped: "median"` for
+Arm A, `runs: 1` and `shipped: "only"` for B and C.)
+
+Working directory is `$SCRATCH`, **not** this repo, so
 no *project* `CLAUDE.md` or its `.claude/` skills are in scope. This does
 **not** isolate the arm from the *global* `~/.claude/CLAUDE.md` on the
 generating machine, which applies regardless of working directory — read
 `docs/method-draft.md` for what that means for Arm A's baseline status.
 
 Prompt template — the only substitutions are the fixture JSON, the fixture's
-one-line description from above, and the fixture name:
+one-line description from above, and the fixture name. **The fixture JSON goes in
+verbatim**; the gate reads the committed prompt back and fails a baseline whose
+recorded prompt does not contain it:
 
 ```
 Here is a dataset:
@@ -86,9 +124,16 @@ export const meta = { fixture: "<NAME>", width: 640, height: 400 };
 export function render(svg, data) { /* mutate the passed <svg> element in place */ }
 
 `data` is the object above. You get a real <svg> element in a jsdom document —
-use svg.ownerDocument and createElementNS, or a d3 selection over it. No
-network. No Date.now() or Math.random(). Return only the module code.
+use svg.ownerDocument and createElementNS, or a d3 selection over it. Do not
+call document globally. No network. No fonts loaded at render time — reference
+font families by name only. No Date.now() or Math.random(); the render must be
+byte-stable across runs. Return only the module code.
 ```
+
+The last three constraints ("do not call document globally", the fonts sentence,
+"byte-stable") are the Phase 2 addition described under the contract above.
+Phase 1's nine Arm A prompts, stored verbatim in their manifests, end at "No
+Date.now() or Math.random(). Return only the module code."
 
 Nothing about quality, style, typography, colour, or references appears in an
 Arm A prompt. That absence is the experiment.
@@ -109,17 +154,28 @@ Here is a chart module. <SKILL INVOCATION, e.g. "Run /impeccable typeset on it."
 
 <ARM A chart.js VERBATIM>
 
-Keep the same module shape (meta + render(svg, data)) and the same data. Change
-only what the skill's remit covers. Return only the module code.
+Keep the same module shape (meta + render(svg, data)) and the same data, and the
+same harness constraints: no network, no fonts loaded at render time, no
+Date.now() or Math.random(), and a byte-stable render. Change only what the
+skill's remit covers. Return only the module code.
 ```
+
+**`<ARM A chart.js VERBATIM>` means verbatim.** The gate reads the committed
+prompt back and fails a refine-mode B or C cell whose recorded prompt does not
+contain its baseline's `chart.js` byte-for-byte — that is the only independent
+handle there is on a published prompt.
 
 For a `from-scratch` row, the skill runs against the same brief Arm A got —
 the Arm A prompt template above, dataset and all — with the skill invocation
-named explicitly at the top instead of omitted.
+named explicitly at the top instead of omitted. The fixture JSON is what the
+gate checks for in that case.
 
 ## Arm C — tool
 
-Run **exactly once**. The tool loop is real, not simulated:
+Run **exactly once**. The tool loop is real, not simulated. The cell contract
+applies to whatever the loop produces — no fonts at render time, no
+`Date.now()`/`Math.random()`, byte-stable render — and for a `refine` row the
+prompt still has to carry the Arm A module verbatim:
 
 - **Reference-PNG + screenshot diff:** save the reference image to
   `$SCRATCH`, then use Anthropic's documented pattern verbatim — *"[paste

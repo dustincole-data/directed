@@ -32,9 +32,33 @@ Anything else is a regeneration, versioned `-v2`, with the original kept.
 
 ## Run counts
 
-Arm A runs three times and the median-looking result ships, because one
-generation is not "the default". Arms B and C run exactly once. Shipping the
-prettiest of several directed attempts would manufacture the result.
+Arm A runs three times and the median result ships, because one generation is
+not "the default". "Median" is a mechanical rule, not a judgment call: all three
+runs are rendered, the run with the **median total SVG element count** ships, and
+a tie is broken by the smaller `chart.js`. Anyone holding the three runs can
+re-derive the same choice. That is the point — a subjective "median-looking" pick
+would let the prettiest baseline ship, which is exactly what this gallery claims
+not to do. The discarded runs are not committed, so the selection is
+reproducible from the runs, not from the repository.
+
+Arms B and C run exactly once. Shipping the prettiest of several directed
+attempts would manufacture the result.
+
+## A Phase 1 / Phase 2 prompt difference
+
+`cells/_contract.md` states four constraints. Phase 1's prompt templates
+transmitted only some of them: no arm that generated the first 24 cells was told
+"do not call `document` globally", "no fonts loaded at render time", or "renders
+must be byte-stable across runs". All 24 shipped cells satisfy all three anyway
+— verified by re-rendering every cell byte-identically and by checking that none
+loads a font — but that was luck, not instruction.
+
+The templates in `docs/factory.md` now state all four, so **Phase 2's prompts are
+not byte-identical to Phase 1's**. The addition is a harness constraint, never a
+design hint, and it is stated here rather than slipped in because Arm A's prompt
+is the experiment's control. Byte-stability in particular is now enforced: the
+integrity gate re-renders each cell and byte-compares against the committed
+`render.svg`.
 
 ## Refine vs from-scratch
 
