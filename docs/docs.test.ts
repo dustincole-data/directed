@@ -27,12 +27,9 @@ describe("factory runbook", () => {
   // gate's re-render check depends on. Pin every line of the contract that
   // matters instead of trusting the claim.
   it("reproduces cells/_contract.md's module shape and constraints verbatim", () => {
-    const signature = contract
-      .split("\n")
-      .filter((l) => l.startsWith("export "))
-      .map((l) => l.trim());
-    const constraints = contract
-      .split("\n")
+    const lines: string[] = contract.split("\n");
+    const signature = lines.filter((l) => l.startsWith("export ")).map((l) => l.trim());
+    const constraints = lines
       .filter((l) => l.startsWith("- ") || l.startsWith("  and ") || l.startsWith("  `"))
       .map((l) => l.trimEnd());
     expect(signature.length).toBe(2);
