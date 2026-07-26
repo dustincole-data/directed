@@ -1,0 +1,176 @@
+import { describe, expect, it, beforeEach } from "vitest";
+import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { writeCellManifest, sha256OfFile } from "./new-cell.mjs";
+
+const DIR = "cells/_mtest/A";
+
+beforeEach(async () => {
+  await rm("cells/_mtest", { recursive: true, force: true });
+  await mkdir(DIR, { recursive: true });
+  await writeFile(`${DIR}/chart.js`, `export const meta={fixture:"table12"};export function render(){}`);
+});
+
+const BASE = {
+  cellDir: DIR, row: "type-01-typeface", rowTitle: "Typeface", family: "type",
+  arm: "A", mode: "refine",
+  method: { kind: "default", name: "clean subagent", args: "", ranOn: null },
+  prompt: "Here is a dataset. Make a chart of it.",
+  fixture: "table12", runs: 3, shipped: "median", notes: "",
+};
+
+describe("writeCellManifest", () => {
+  it("writes cell.json with a composite id", async () => {
+    await writeCellManifest(BASE);
+    const m = JSON.parse(await readFile(`${DIR}/cell.json`, "utf8"));
+    expect(m.id).toBe("type-01-typeface.A");
+  });
+
+  it("records the sha256 of chart.js so later edits are detectable", async () => {
+    await writeCellManifest(BASE);
+    const m = JSON.parse(await readFile(`${DIR}/cell.json`, "utf8"));
+    expect(m.codeSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(m.codeSha256).toBe(await sha256OfFile(`${DIR}/chart.js`));
+  });
+
+  it("hash changes when chart.js changes", async () => {
+    const before = await sha256OfFile(`${DIR}/chart.js`);
+    await writeFile(`${DIR}/chart.js`, `export const meta={fixture:"hero8"};export function render(){}`);
+    expect(await sha256OfFile(`${DIR}/chart.js`)).not.toBe(before);
+  });
+
+  it("rejects an empty prompt", async () => {
+    await expect(writeCellManifest({ ...BASE, prompt: "   " })).rejects.toThrow(/prompt/i);
+  });
+
+  it("forces runs=1 shipped=only for arms B and C", async () => {
+    await writeCellManifest({
+      ...BASE, arm: "B", runs: 3, shipped: "median",
+      method: { kind: "skill", name: "/impeccable typeset", args: "", ranOn: "type-01-typeface.A" },
+    });
+    const m = JSON.parse(await readFile(`${DIR}/cell.json`, "utf8"));
+    expect(m.runs).toBe(1);
+    expect(m.shipped).toBe("only");
+  });
+
+  it("requires ranOn for a refine-mode non-A arm", async () => {
+    await expect(writeCellManifest({
+      ...BASE, arm: "B", mode: "refine",
+      method: { kind: "skill", name: "/impeccable typeset", args: "", ranOn: null },
+    })).rejects.toThrow(/ranOn/i);
+  });
+});
+
+describe("sha256OfFile", () => {
+  it("hashes raw bytes: appending one byte changes the digest", async () => {
+    const path = "cells/_mtest/A/chart.js";
+    const before = await sha256OfFile(path);
+    const buf = await readFile(path);
+    await writeFile(path, Buffer.concat([buf, Buffer.from([0x2e])])); // append "."
+    const after = await sha256OfFile(path);
+    expect(after).not.toBe(before);
+  });
+});
+
+// ---- CLI ---------------------------------------------------------------
+//
+// These spawn the real `node scripts/new-cell.mjs ...` process, because the
+// exported-function tests above never exercise argument parsing, the
+// prompt-file read, or the src/rows.ts lookup that the CLI is responsible for.
+
+function runCli(args) {
+  return spawnSync(process.execPath, ["scripts/new-cell.mjs", ...args], {
+    encoding: "utf8",
+    cwd: process.cwd(),
+  });
+}
+
+describe("new-cell CLI", () => {
+  it("writes a cell.json end-to-end, deriving rowTitle/family from src/rows.ts", async () => {
+    const cellDir = "cells/_mtest/cli-A";
+    await mkdir(cellDir, { recursive: true });
+    await writeFile(`${cellDir}/chart.js`, `export const meta={fixture:"table12"};export function render(){}`);
+    const promptPath = "cells/_mtest/prompt-a.txt";
+    const promptText = "Here is a dataset.\nMake a chart of it.\nUse line 3 too.";
+    await writeFile(promptPath, promptText);
+
+    const res = runCli([
+      "--row", "type-01-typeface",
+      "--arm", "A",
+      "--mode", "refine",
+      "--method-kind", "default",
+      "--method-name", "clean subagent, naive prompt",
+      "--fixture", "table12",
+      "--cell-dir", cellDir,
+      "--prompt-file", promptPath,
+    ]);
+
+    expect(res.status).toBe(0);
+    const m = JSON.parse(await readFile(`${cellDir}/cell.json`, "utf8"));
+    expect(m.id).toBe("type-01-typeface.A");
+    expect(m.rowTitle).toBe("Typeface");
+    expect(m.family).toBe("type");
+    expect(m.prompt).toBe(promptText);
+    expect(m.runs).toBe(3);
+    expect(m.shipped).toBe("median");
+    expect(m.codeSha256).toBe(await sha256OfFile(`${cellDir}/chart.js`));
+  });
+
+  it("forces runs=1/shipped=only for arm B and requires --ran-on in refine mode", async () => {
+    const cellDir = "cells/_mtest/cli-B";
+    await mkdir(cellDir, { recursive: true });
+    await writeFile(`${cellDir}/chart.js`, `export const meta={fixture:"table12"};export function render(){}`);
+    const promptPath = "cells/_mtest/prompt-b.txt";
+    await writeFile(promptPath, "Typeset this more deliberately.");
+
+    const withoutRanOn = runCli([
+      "--row", "type-01-typeface", "--arm", "B", "--mode", "refine",
+      "--method-kind", "skill", "--method-name", "/impeccable typeset",
+      "--fixture", "table12", "--cell-dir", cellDir, "--prompt-file", promptPath,
+    ]);
+    expect(withoutRanOn.status).not.toBe(0);
+    expect(withoutRanOn.stderr).toMatch(/ranOn/i);
+
+    const withRanOn = runCli([
+      "--row", "type-01-typeface", "--arm", "B", "--mode", "refine",
+      "--method-kind", "skill", "--method-name", "/impeccable typeset",
+      "--ran-on", "type-01-typeface.A",
+      "--fixture", "table12", "--cell-dir", cellDir, "--prompt-file", promptPath,
+    ]);
+    expect(withRanOn.status).toBe(0);
+    const m = JSON.parse(await readFile(`${cellDir}/cell.json`, "utf8"));
+    expect(m.runs).toBe(1);
+    expect(m.shipped).toBe("only");
+    expect(m.method.ranOn).toBe("type-01-typeface.A");
+  });
+
+  it("falls back to --row-title/--family when the row is not in src/rows.ts", async () => {
+    const cellDir = "cells/_mtest/cli-fake";
+    await mkdir(cellDir, { recursive: true });
+    await writeFile(`${cellDir}/chart.js`, `export const meta={fixture:"table12"};export function render(){}`);
+    const promptPath = "cells/_mtest/prompt-fake.txt";
+    await writeFile(promptPath, "Scratch row for CLI override test.");
+
+    const res = runCli([
+      "--row", "test-99-fake", "--arm", "A", "--mode", "from-scratch",
+      "--method-kind", "default", "--method-name", "clean subagent",
+      "--fixture", "table12", "--cell-dir", cellDir, "--prompt-file", promptPath,
+      "--row-title", "Fake Row For Testing", "--family", "test",
+    ]);
+    expect(res.status).toBe(0);
+    const m = JSON.parse(await readFile(`${cellDir}/cell.json`, "utf8"));
+    expect(m.rowTitle).toBe("Fake Row For Testing");
+    expect(m.family).toBe("test");
+  });
+
+  it("errors with a usage message and non-zero exit when a required flag is missing", () => {
+    const res = runCli([
+      "--row", "type-01-typeface", "--arm", "A", "--mode", "refine",
+      "--method-kind", "default", "--method-name", "clean subagent",
+      // --fixture and --prompt-file omitted
+    ]);
+    expect(res.status).not.toBe(0);
+    expect(res.stderr).toMatch(/--fixture/);
+    expect(res.stderr).toMatch(/--prompt-file/);
+  });
+});
