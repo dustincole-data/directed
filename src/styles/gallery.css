@@ -1,0 +1,31 @@
+/* src/styles/gallery.css */
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/archivo-latin-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/archivo-latin-600.woff2") format("woff2");
+}
+:root { --ink: #16161a; --muted: #6b6b73; --rule: #e4e4e8; --bg: #fdfdfc; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 15px/1.5 Archivo, system-ui, sans-serif; }
+.row { border-top: 1px solid var(--rule); padding: 2.5rem 0; }
+.row__head h3 { margin: 0 0 .25rem; font-size: 1.0625rem; font-weight: 600; }
+.row__mode, .row__meta { margin: 0; color: var(--muted); font-size: .8125rem; }
+.row__cells { display: grid; gap: 1.25rem; margin-top: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.swatch { margin: 0; }
+.swatch__render { background: #fff; border: 1px solid var(--rule); overflow-x: auto; }
+.swatch__render svg { display: block; max-width: 100%; height: auto; }
+.swatch figcaption { display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline;
+  margin-top: .5rem; font-size: .75rem; color: var(--muted); }
+.swatch__arm { font-weight: 600; color: var(--ink); }
+.gap { border: 1px dashed var(--rule); padding: 1rem; font-size: .8125rem; color: var(--muted); }
+.gap h4 { margin: 0 0 .5rem; color: var(--ink); }

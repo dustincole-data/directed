@@ -1,0 +1,14 @@
+---
+// src/components/Swatch.astro
+import { armLabel, methodChip } from "../lib/labels";
+const { cell } = Astro.props;
+---
+<figure class="swatch">
+  <div class="swatch__render" set:html={cell.svg} />
+  <figcaption>
+    <span class="swatch__arm">{armLabel(cell.arm)}</span>
+    <code class="swatch__method">{methodChip(cell.method)}</code>
+    {cell.arm === "A" && <span class="swatch__runs">{cell.runs} runs · {cell.shipped}</span>}
+    <a class="swatch__link" href={`/cell/${cell.id}`}>prompt &amp; code →</a>
+  </figcaption>
+</figure>
