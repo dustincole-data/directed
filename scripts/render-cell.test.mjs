@@ -99,5 +99,7 @@ export function render(svg, data) {
     const svg = await readFile(`${dir}/render.svg`, "utf8");
     expect((svg.match(/<radialGradient/g) ?? []).length).toBe(8);
     expect(svg).toContain('fill="url(#probe-0)"');
-  });
+    // Generous timeout: the spawned process loads jsdom and d3 from disk, which
+    // took 5.7s from a cold cache — over vitest's 5s default.
+  }, 30_000);
 });
