@@ -82,6 +82,53 @@ describe("verifyCells", () => {
     expect(failures.join()).toMatch(/ranOn/i);
   });
 
+  // Fix round 1: check 4 used to split ranOn on "." and only ever look at the
+  // row segment, so "<row>.C" or a bare "<row>" (no arm suffix at all) both
+  // silently resolved as long as that row had a real Arm-A cell — a cell
+  // could claim descent from one arm while the gate validated a different
+  // one. These three tests pin the closed hole: the two bad shapes below
+  // must now fail, and the well-formed shape must still pass.
+  async function writeRefineB(ranOn) {
+    const bDir = `${ROOT}/${ROW}/B`;
+    await mkdir(bDir, { recursive: true });
+    await writeFile(`${bDir}/chart.js`, CHART);
+    await renderCell(bDir);
+    await writeCellManifest({
+      cellDir: bDir, row: ROW, rowTitle: "Typeface", family: "type", arm: "B",
+      mode: "refine",
+      method: { kind: "skill", name: "/impeccable typeset", args: "", ranOn },
+      prompt: "Run /impeccable typeset on this chart.", fixture: "table12",
+    });
+    return bDir;
+  }
+
+  it("check 4: fails when ranOn names a real row but the wrong arm suffix (the old hole)", async () => {
+    // type-01-typeface/A is a real, valid, generated Arm-A cell (seeded by
+    // beforeEach) — before the fix, ranOn: "type-01-typeface.C" resolved
+    // against that A cell and passed silently, even though it claims
+    // descent from a C cell that doesn't exist.
+    await writeRefineB(`${ROW}.C`);
+    const { ok, failures } = await verifyCells({ cellsDir: ROOT });
+    expect(ok).toBe(false);
+    expect(failures.join()).toContain(`method.ranOn "${ROW}.C"`);
+    expect(failures.join()).toMatch(/well-formed/i);
+  });
+
+  it("check 4: fails when ranOn has no arm suffix at all", async () => {
+    await writeRefineB(ROW);
+    const { ok, failures } = await verifyCells({ cellsDir: ROOT });
+    expect(ok).toBe(false);
+    expect(failures.join()).toContain(`method.ranOn "${ROW}"`);
+    expect(failures.join()).toMatch(/well-formed/i);
+  });
+
+  it("check 4: still passes a well-formed ranOn that resolves to a real Arm-A cell", async () => {
+    await writeRefineB(`${ROW}.A`);
+    const { ok, failures } = await verifyCells({ cellsDir: ROOT });
+    expect(failures.join()).not.toMatch(/ranOn/i);
+    expect(ok).toBe(true);
+  });
+
   it("check 6: fails when chart.js is edited after generation", async () => {
     await writeFile(`${DIR}/chart.js`, CHART + "\n// hand-tweaked to look nicer\n");
     const { ok, failures } = await verifyCells({ cellsDir: ROOT });

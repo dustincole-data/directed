@@ -91,8 +91,22 @@ export async function verifyCells({ cellsDir = "cells" } = {}) {
       const ranOn = m.method?.ranOn;
       if (!ranOn) {
         failures.push(`${tag}: refine arm missing method.ranOn`);
-      } else if (!(await exists(join(CELLS, ranOn.split(".")[0], "A", "cell.json")))) {
-        failures.push(`${tag}: method.ranOn "${ranOn}" does not resolve to a generated Arm A cell`);
+      } else {
+        // ranOn must be exactly "<row>.A" — a bare split-on-"." that only
+        // checks the row segment would let a cell claim ranOn: "<row>.C" (or
+        // "<row>" with no arm at all) and still resolve, as long as that row
+        // happens to have a real Arm-A cell. That's a lineage forgery: the
+        // cell can say it descends from one arm while the gate silently
+        // validates against another. Require the id to parse as exactly two
+        // "."-separated, non-empty segments with the arm segment literally "A".
+        const parts = ranOn.split(".");
+        const [ranOnRow, ranOnArm] = parts;
+        const malformed = parts.length !== 2 || !ranOnRow || ranOnArm !== "A";
+        if (malformed) {
+          failures.push(`${tag}: method.ranOn "${ranOn}" is not a well-formed "<row>.A" id`);
+        } else if (!(await exists(join(CELLS, ranOnRow, "A", "cell.json")))) {
+          failures.push(`${tag}: method.ranOn "${ranOn}" does not resolve to a generated Arm A cell`);
+        }
       }
     }
 
