@@ -16,6 +16,8 @@ export async function writeCellManifest(input) {
   if (!prompt || !prompt.trim()) throw new Error("cell.prompt must be verbatim and non-empty");
   if (!/^[a-z]+-\d{2}-[a-z0-9-]+$/.test(row)) throw new Error(`bad row id: ${row}`);
   if (!["A", "B", "C"].includes(arm)) throw new Error(`bad arm: ${arm}`);
+  if (!["refine", "from-scratch"].includes(mode)) throw new Error(`bad mode: ${mode}`);
+  if (!["default", "skill", "tool"].includes(method?.kind)) throw new Error(`bad method.kind: ${method?.kind}`);
   if (arm !== "A" && mode === "refine" && !method?.ranOn) {
     throw new Error(`${row}.${arm}: refine-mode arms must name method.ranOn`);
   }

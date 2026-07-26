@@ -59,6 +59,23 @@ describe("writeCellManifest", () => {
       method: { kind: "skill", name: "/impeccable typeset", args: "", ranOn: null },
     })).rejects.toThrow(/ranOn/i);
   });
+
+  it("rejects a mis-cased mode instead of silently bypassing the ranOn check", async () => {
+    // Regression: "Refine" !== "refine", so the old code's `mode === "refine"`
+    // guard fell through and let an arm-B cell write with ranOn: null — a cell
+    // that claims refinement but records no baseline. Must fail loudly, not
+    // coerce the case.
+    await expect(writeCellManifest({
+      ...BASE, arm: "B", mode: "Refine",
+      method: { kind: "skill", name: "/impeccable typeset", args: "", ranOn: null },
+    })).rejects.toThrow(/mode/i);
+  });
+
+  it("rejects an unknown method.kind", async () => {
+    await expect(writeCellManifest({
+      ...BASE, method: { kind: "magic", name: "wand", args: "", ranOn: null },
+    })).rejects.toThrow(/method\.kind/i);
+  });
 });
 
 describe("sha256OfFile", () => {
@@ -172,5 +189,38 @@ describe("new-cell CLI", () => {
     expect(res.status).not.toBe(0);
     expect(res.stderr).toMatch(/--fixture/);
     expect(res.stderr).toMatch(/--prompt-file/);
+  });
+
+  it("rejects a mis-cased --mode instead of silently bypassing ranOn (CLI path)", async () => {
+    // Reviewer-reproduced hole: `--mode Refine` (capital R) used to sail past
+    // the `mode === "refine"` guard, writing an arm-B cell.json with
+    // ranOn: null and no provenance to its baseline. Must now fail loudly.
+    const cellDir = "cells/_mtest/cli-badmode";
+    const promptPath = "cells/_mtest/prompt-badmode.txt";
+    await writeFile(promptPath, "Typeset this more deliberately.");
+
+    const res = runCli([
+      "--row", "type-01-typeface", "--arm", "B", "--mode", "Refine",
+      "--method-kind", "skill", "--method-name", "/impeccable typeset",
+      "--fixture", "table12", "--cell-dir", cellDir, "--prompt-file", promptPath,
+    ]);
+    expect(res.status).not.toBe(0);
+    expect(res.stderr).toMatch(/mode/i);
+    await expect(readFile(`${cellDir}/cell.json`, "utf8")).rejects.toThrow();
+  });
+
+  it("rejects an unknown --method-kind (CLI path)", async () => {
+    const cellDir = "cells/_mtest/cli-badkind";
+    const promptPath = "cells/_mtest/prompt-badkind.txt";
+    await writeFile(promptPath, "Whatever, use magic.");
+
+    const res = runCli([
+      "--row", "type-01-typeface", "--arm", "A", "--mode", "refine",
+      "--method-kind", "magic", "--method-name", "wand",
+      "--fixture", "table12", "--cell-dir", cellDir, "--prompt-file", promptPath,
+    ]);
+    expect(res.status).not.toBe(0);
+    expect(res.stderr).toMatch(/method\.kind/i);
+    await expect(readFile(`${cellDir}/cell.json`, "utf8")).rejects.toThrow();
   });
 });
