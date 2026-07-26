@@ -165,8 +165,20 @@ node scripts/verify-cells.mjs
 Required flags on `new-cell.mjs`: `--row`, `--arm`, `--prompt-file`,
 `--mode`, `--method-kind`, `--method-name`, `--fixture`. Optional:
 `--method-args`, `--ran-on`, `--notes`, `--cell-dir` (defaults to
-`cells/<row>/<arm>`), and the fallback pair `--row-title`/`--family` — only
-needed together, and only if `<row>` is not yet declared in `src/rows.json`.
+`cells/<row>/<arm>`), and the pair `--row-title`/`--family`.
+
+`--row` must match `/^[a-z]+-\d{2}-[a-z0-9-]+$/` — lowercase family, a
+two-digit number, a lowercase-and-hyphens slug (`type-01-typeface`,
+`color-06-accent`). Anything else exits 2 with `bad row id: <row>` before
+writing.
+
+`--row-title`/`--family` are for a row **not yet declared in `src/rows.json`**,
+and only work as a pair. For a row that *is* declared, `rows.json` is the
+authority: the script uses its `title`/`family` and **rejects** flags that
+contradict them, because the pair used to take precedence and would silently
+relabel a declared row's published manifest. If a declared row's title or
+family is wrong, change `src/rows.json` — the integrity gate (check 8) compares
+every manifest's `rowTitle` and `family` against it.
 
 `--mode` and `--method-kind` are validated against closed, case-sensitive
 sets — `refine`/`from-scratch` and `default`/`skill`/`tool` — with **no case

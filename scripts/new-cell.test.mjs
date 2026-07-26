@@ -161,6 +161,48 @@ describe("new-cell CLI", () => {
     expect(m.method.ranOn).toBe("type-01-typeface.A");
   });
 
+  it("refuses --row-title/--family that contradict a row src/rows.json declares", async () => {
+    const cellDir = "cells/_mtest/cli-override";
+    await mkdir(cellDir, { recursive: true });
+    await writeFile(`${cellDir}/chart.js`, `export const meta={fixture:"table12"};export function render(){}`);
+    const promptPath = "cells/_mtest/prompt-override.txt";
+    await writeFile(promptPath, "Here is a dataset. Make a chart of it.");
+
+    // The runbook described this pair as a fallback for an undeclared row. It
+    // actually took precedence over rows.json, so it silently relabelled a
+    // declared row in the published manifest.
+    const res = runCli([
+      "--row", "type-01-typeface", "--arm", "A", "--mode", "refine",
+      "--method-kind", "default", "--method-name", "clean subagent, naive prompt",
+      "--fixture", "table12", "--cell-dir", cellDir, "--prompt-file", promptPath,
+      "--row-title", "Numerals", "--family", "layout",
+    ]);
+    expect(res.status).not.toBe(0);
+    expect(res.stderr).toMatch(/contradict src\/rows\.json/);
+    expect(res.stderr).toMatch(/rows\.json is the authority/);
+    // Nothing was written.
+    await expect(readFile(`${cellDir}/cell.json`, "utf8")).rejects.toThrow();
+  });
+
+  it("accepts --row-title/--family that agree with src/rows.json", async () => {
+    const cellDir = "cells/_mtest/cli-agree";
+    await mkdir(cellDir, { recursive: true });
+    await writeFile(`${cellDir}/chart.js`, `export const meta={fixture:"table12"};export function render(){}`);
+    const promptPath = "cells/_mtest/prompt-agree.txt";
+    await writeFile(promptPath, "Here is a dataset. Make a chart of it.");
+
+    const res = runCli([
+      "--row", "type-01-typeface", "--arm", "A", "--mode", "refine",
+      "--method-kind", "default", "--method-name", "clean subagent, naive prompt",
+      "--fixture", "table12", "--cell-dir", cellDir, "--prompt-file", promptPath,
+      "--row-title", "Typeface", "--family", "type",
+    ]);
+    expect(res.status).toBe(0);
+    const m = JSON.parse(await readFile(`${cellDir}/cell.json`, "utf8"));
+    expect(m.rowTitle).toBe("Typeface");
+    expect(m.family).toBe("type");
+  });
+
   it("falls back to --row-title/--family when the row is not in src/rows.ts", async () => {
     const cellDir = "cells/_mtest/cli-fake";
     await mkdir(cellDir, { recursive: true });

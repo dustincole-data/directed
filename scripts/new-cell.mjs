@@ -64,7 +64,8 @@ const USAGE = `usage: node scripts/new-cell.mjs
   --method-name "<exact invocation>"
   [--method-args "<text>"] [--ran-on <row>.A] --fixture <name>
   [--notes "<text>"] [--cell-dir <path>]
-  [--row-title <title> --family <family>]  (fallback if src/rows.json lookup fails)`;
+  [--row-title <title> --family <family>]  (undeclared rows only; rejected if
+                                            they contradict src/rows.json)`;
 
 function parseArgs(argv) {
   const flags = {};
@@ -85,20 +86,41 @@ function parseArgs(argv) {
 }
 
 async function deriveRowMeta(row, flags) {
-  if (flags["row-title"] && flags.family) {
-    return { rowTitle: flags["row-title"], family: flags.family };
-  }
+  const override =
+    flags["row-title"] && flags.family
+      ? { rowTitle: flags["row-title"], family: flags.family }
+      : null;
+
+  let decl;
+  let readErr;
   try {
     const rows = JSON.parse(await readFile(resolve("src/rows.json"), "utf8"));
-    const decl = rows.find((r) => r.id === row);
-    if (!decl) throw new Error(`unknown row: ${row}`);
-    return { rowTitle: decl.title, family: decl.family };
+    decl = rows.find((r) => r.id === row);
   } catch (err) {
-    throw new Error(
-      `could not derive rowTitle/family for "${row}" from src/rows.json (${err.message}); ` +
-        `pass --row-title and --family explicitly`,
-    );
+    readErr = err;
   }
+
+  // src/rows.json is the authority for a row it declares. The flags used to be
+  // consulted first, so passing the pair silently relabelled a declared row's
+  // title and family in the published manifest — the same mislabelling class the
+  // integrity gate's check 8 now catches, reachable through usage the runbook
+  // documented as safe.
+  if (decl) {
+    if (override && (override.rowTitle !== decl.title || override.family !== decl.family)) {
+      throw new Error(
+        `--row-title/--family contradict src/rows.json for the declared row "${row}" ` +
+          `(declared: "${decl.title}" / "${decl.family}"). rows.json is the authority — ` +
+          `drop the flags, or change rows.json first.`,
+      );
+    }
+    return { rowTitle: decl.title, family: decl.family };
+  }
+
+  if (override) return override;
+  throw new Error(
+    `could not derive rowTitle/family for "${row}" from src/rows.json ` +
+      `(${readErr?.message ?? `unknown row: ${row}`}); pass --row-title and --family explicitly`,
+  );
 }
 
 export async function runCli(argv) {
