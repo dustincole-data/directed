@@ -1,0 +1,69 @@
+{
+  "name": "table12",
+  "source": "https://api.worldbank.org/v2/country/USA;JPN;DEU;BRA;IND;NGA;CHN;MEX;ZAF;FRA;IDN;EGY/indicator/SP.DYN.LE00.IN?format=json&mrnev=1 (FALLBACK: primary lichess explorer failed with \"lichess 401\"; using World Bank life expectancy at birth, 12 countries, baseline = world value)",
+  "fetched": "2026-07-26",
+  "baseline": 73.48,
+  "unit": "years (life expectancy at birth)",
+  "rows": [
+    {
+      "label": "Brazil",
+      "value": 76.02,
+      "delta": 2.54
+    },
+    {
+      "label": "China",
+      "value": 78.02,
+      "delta": 4.54
+    },
+    {
+      "label": "Germany",
+      "value": 80.79,
+      "delta": 7.31
+    },
+    {
+      "label": "Egypt, Arab Rep.",
+      "value": 71.81,
+      "delta": -1.67
+    },
+    {
+      "label": "France",
+      "value": 82.98,
+      "delta": 9.5
+    },
+    {
+      "label": "Indonesia",
+      "value": 71.29,
+      "delta": -2.19
+    },
+    {
+      "label": "India",
+      "value": 72.23,
+      "delta": -1.25
+    },
+    {
+      "label": "Japan",
+      "value": 84.04,
+      "delta": 10.56
+    },
+    {
+      "label": "Mexico",
+      "value": 75.26,
+      "delta": 1.78
+    },
+    {
+      "label": "Nigeria",
+      "value": 54.63,
+      "delta": -18.85
+    },
+    {
+      "label": "United States",
+      "value": 78.89,
+      "delta": 5.41
+    },
+    {
+      "label": "South Africa",
+      "value": 66.31,
+      "delta": -7.17
+    }
+  ]
+}

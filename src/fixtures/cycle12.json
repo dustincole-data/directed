@@ -1,0 +1,21 @@
+{
+  "name": "cycle12",
+  "source": "derived:CBM sunrise equation at 40N, mid-month day-of-year; see plan Task 2",
+  "fetched": "2026-07-25",
+  "baseline": 12,
+  "unit": "hours of daylight",
+  "rows": [
+    { "index": 0, "label": "Jan", "value": 9.458, "delta": -2.542 },
+    { "index": 1, "label": "Feb", "value": 10.436, "delta": -1.564 },
+    { "index": 2, "label": "Mar", "value": 11.684, "delta": -0.316 },
+    { "index": 3, "label": "Apr", "value": 13.066, "delta": 1.066 },
+    { "index": 4, "label": "May", "value": 14.212, "delta": 2.212 },
+    { "index": 5, "label": "Jun", "value": 14.827, "delta": 2.827 },
+    { "index": 6, "label": "Jul", "value": 14.576, "delta": 2.576 },
+    { "index": 7, "label": "Aug", "value": 13.584, "delta": 1.584 },
+    { "index": 8, "label": "Sep", "value": 12.248, "delta": 0.248 },
+    { "index": 9, "label": "Oct", "value": 10.912, "delta": -1.088 },
+    { "index": 10, "label": "Nov", "value": 9.741, "delta": -2.259 },
+    { "index": 11, "label": "Dec", "value": 9.17, "delta": -2.83 }
+  ]
+}
