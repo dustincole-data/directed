@@ -1,0 +1,28 @@
+{
+  "name": "directed",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "npm run build:registry && astro build",
+    "test": "vitest run",
+    "render:cell": "node scripts/render-cell.mjs",
+    "build:registry": "node scripts/build-registry.mjs",
+    "verify:cells": "node scripts/verify-cells.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "astro": "^5.18.2",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "d3": "^7.9.0"
+  }
+}
