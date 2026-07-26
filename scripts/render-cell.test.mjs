@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeAll } from "vitest";
 import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import { renderCell } from "./render-cell.mjs";
 
 const DIR = "cells/_test/A";
@@ -53,5 +54,50 @@ describe("renderCell", () => {
     await mkdir("cells/_test/B", { recursive: true });
     await writeFile("cells/_test/B/chart.js", `export const meta = { fixture: "table12" };`);
     await expect(renderCell("cells/_test/B")).rejects.toThrow(/render/i);
+  });
+
+  // The craft barrel had zero importers and could not have had one: bare Node
+  // ESM (what this renderer runs a cell under) cannot resolve extensionless
+  // re-exports, so `src/craft/index.ts` threw ERR_MODULE_NOT_FOUND from a cell.
+  // That is the defect that cost mark-02-gradient.B two generation attempts, and
+  // ~10 craft:* rows are queued.
+  //
+  // This has to run through a real `node` process: under vitest, Vite resolves
+  // the dynamic import for us and an extensionless re-export loads fine, so an
+  // in-process renderCell() call cannot see the defect at all.
+  // `cells/_test/craft-barrel/` is three directories deep, exactly like
+  // `cells/<row>/<arm>/`, so the specifier below is the one a real cell writes.
+  it("lets a cell at real cell depth import the craft barrel under bare Node", async () => {
+    const dir = "cells/_test/craft-barrel";
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      `${dir}/chart.js`,
+      `import { select } from "d3-selection";
+import { perDatumRadialGradient, SPECTRAL_10 } from "../../../src/craft/index.ts";
+export const meta = { fixture: "hero8", width: 200, height: 100 };
+export function render(svg, data) {
+  const doc = svg.ownerDocument;
+  const defs = doc.createElementNS("http://www.w3.org/2000/svg", "defs");
+  svg.appendChild(defs);
+  const fill = perDatumRadialGradient(select(defs), data.rows, {
+    idPrefix: "probe",
+    color: (_d, i) => SPECTRAL_10[i % SPECTRAL_10.length],
+  });
+  data.rows.forEach((r, i) => {
+    const c = doc.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", String(i * 20));
+    c.setAttribute("r", "6");
+    c.setAttribute("fill", fill(r, i));
+    svg.appendChild(c);
+  });
+}
+`,
+    );
+    const res = spawnSync(process.execPath, ["scripts/render-cell.mjs", dir], { encoding: "utf8" });
+    expect(res.stderr).not.toMatch(/ERR_MODULE_NOT_FOUND/);
+    expect(res.status).toBe(0);
+    const svg = await readFile(`${dir}/render.svg`, "utf8");
+    expect((svg.match(/<radialGradient/g) ?? []).length).toBe(8);
+    expect(svg).toContain('fill="url(#probe-0)"');
   });
 });

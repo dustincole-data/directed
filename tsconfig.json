@@ -1,4 +1,4 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "compilerOptions": { "resolveJsonModule": true, "allowImportingTsExtensions": false }
+  "compilerOptions": { "resolveJsonModule": true, "allowImportingTsExtensions": true }
 }

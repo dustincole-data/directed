@@ -23,6 +23,28 @@ shape, never a design hint, and it is disclosed on `/method`. It is
 reproduced here verbatim from `cells/_contract.md` — if the two ever
 disagree, that file is the source of truth.
 
+## Importing a craft helper from a cell
+
+A cell runs under **bare Node ESM** — `scripts/render-cell.mjs` imports
+`chart.js` directly — and bare Node does not resolve extensionless specifiers.
+Every import of project code from a cell therefore carries an explicit `.ts`
+extension. Both forms below work from `cells/<row>/<arm>/chart.js`:
+
+```js
+import { perDatumRadialGradient, spectralField } from "../../../src/craft/index.ts";
+import { perDatumRadialGradient } from "../../../src/craft/gradient.ts";
+```
+
+Two failure modes to put in any brief you hand a craft arm, because they cost
+`mark-02-gradient.B` two of its three generation attempts:
+
+- Extensionless (`"../../../src/craft/gradient"`) fails with
+  `ERR_MODULE_NOT_FOUND`, from the barrel as well as from a module.
+- The helpers take a **d3 selection**, not a raw DOM element —
+  `perDatumRadialGradient(select(defs), …)`, not
+  `perDatumRadialGradient(defs, …)`, which fails with
+  `defs.selectAll is not a function`.
+
 ## Dataset one-liners
 
 The only per-row substitutions into the Arm A template are the fixture JSON
