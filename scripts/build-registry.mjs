@@ -1,7 +1,6 @@
-import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
-const CELLS = resolve("cells");
 const OUT = resolve("src/generated/registry.json");
 
 async function loadRows() {
@@ -11,38 +10,45 @@ async function loadRows() {
   return JSON.parse(raw);
 }
 
-async function readCell(rowId, arm) {
-  // Every candidate directory here is cells/<rowId>/<arm>, built from a
+async function readCell(cellsRoot, rowId, arm) {
+  // Every candidate directory here is <cellsRoot>/<rowId>/<arm>, built from a
   // declared row id and arm letter — never from a directory listing — so
   // the "_"-prefixed scratch/contract entries under cells/ (cells/_contract.md,
-  // cells/_test/, cells/_mtest/) are never touched.
-  const dir = join(CELLS, rowId, arm);
+  // cells/_test/, cells/_mtest/, cells/_vtest/) are never touched.
+  //
+  // Any read failure here (dir absent, cell.json missing/malformed,
+  // render.svg missing) is treated as "not generated yet" rather than a
+  // crash — a half-written cell just doesn't appear in the registry. It is
+  // verify-cells.mjs's job (check 1) to complain loudly about a cell dir
+  // that exists but is incomplete; buildRegistry only needs to stay usable
+  // while that state is inspected.
+  const dir = join(cellsRoot, rowId, arm);
   try {
-    await stat(dir);
+    const manifest = JSON.parse(await readFile(join(dir, "cell.json"), "utf8"));
+    const svg = await readFile(join(dir, "render.svg"), "utf8");
+    return {
+      id: manifest.id,
+      arm: manifest.arm,
+      method: manifest.method,
+      prompt: manifest.prompt,
+      runs: manifest.runs,
+      shipped: manifest.shipped,
+      generated: manifest.generated,
+      svg,
+    };
   } catch {
     return null;
   }
-  const manifest = JSON.parse(await readFile(join(dir, "cell.json"), "utf8"));
-  const svg = await readFile(join(dir, "render.svg"), "utf8");
-  return {
-    id: manifest.id,
-    arm: manifest.arm,
-    method: manifest.method,
-    prompt: manifest.prompt,
-    runs: manifest.runs,
-    shipped: manifest.shipped,
-    generated: manifest.generated,
-    svg,
-  };
 }
 
-export async function buildRegistry() {
+export async function buildRegistry({ cellsDir = "cells" } = {}) {
+  const CELLS = resolve(cellsDir);
   const rows = await loadRows();
   const outRows = [];
   for (const r of rows) {
     const cells = [];
     for (const a of r.arms) {
-      const c = await readCell(r.id, a.arm);
+      const c = await readCell(CELLS, r.id, a.arm);
       if (c) cells.push(c);
     }
     cells.sort((x, y) => x.arm.localeCompare(y.arm));
