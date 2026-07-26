@@ -6,6 +6,7 @@
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
+    "predev": "node scripts/build-registry.mjs",
     "dev": "astro dev",
     "build": "npm run build:registry && astro build",
     "test": "vitest run",

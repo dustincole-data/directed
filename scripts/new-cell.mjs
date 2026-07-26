@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 
 export async function sha256OfFile(path) {
   const buf = await readFile(resolve(path));
@@ -65,7 +64,7 @@ const USAGE = `usage: node scripts/new-cell.mjs
   --method-name "<exact invocation>"
   [--method-args "<text>"] [--ran-on <row>.A] --fixture <name>
   [--notes "<text>"] [--cell-dir <path>]
-  [--row-title <title> --family <family>]  (fallback if src/rows.ts lookup fails)`;
+  [--row-title <title> --family <family>]  (fallback if src/rows.json lookup fails)`;
 
 function parseArgs(argv) {
   const flags = {};
@@ -90,13 +89,13 @@ async function deriveRowMeta(row, flags) {
     return { rowTitle: flags["row-title"], family: flags.family };
   }
   try {
-    const rowsUrl = pathToFileURL(resolve("src/rows.ts")).href;
-    const { getRow } = await import(rowsUrl);
-    const decl = getRow(row);
+    const rows = JSON.parse(await readFile(resolve("src/rows.json"), "utf8"));
+    const decl = rows.find((r) => r.id === row);
+    if (!decl) throw new Error(`unknown row: ${row}`);
     return { rowTitle: decl.title, family: decl.family };
   } catch (err) {
     throw new Error(
-      `could not derive rowTitle/family for "${row}" from src/rows.ts (${err.message}); ` +
+      `could not derive rowTitle/family for "${row}" from src/rows.json (${err.message}); ` +
         `pass --row-title and --family explicitly`,
     );
   }
