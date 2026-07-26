@@ -16,7 +16,9 @@ npm run build          # verify:cells -> build registry -> astro build (static s
 
 ## Immutability
 
-Everything under `cells/` is generated, not edited. Once a cell is committed, its `chart.js` is hash-checked against `cell.json` on every build (`verify-cells.mjs`) — hand-editing a cell after generation fails the build. If a cell is wrong, it's regenerated as a new version; the original stays. The only permitted post-generation edits (applied uniformly, disclosed on `/method`) are injecting the shared dataset import, injecting the shared mount point, and stripping a hardcoded page background.
+Everything under `cells/` is generated, not edited. On every build, `verify-cells.mjs` checks all three of a cell's files: `chart.js` against the hash recorded in `cell.json` at generation time, `render.svg` against a fresh re-render of that `chart.js`, and every `cell.json` field against `src/rows.json`, the directory the cell lives at, and `chart.js`'s own `meta`. Hand-editing any of the three after generation fails the build. What that does *not* prove is that a cell was machine-generated in the first place — the hash says "unchanged since it was registered", so the diff that introduces a cell is still worth reading. If a cell is wrong, it's regenerated as a new version; the original stays. The only permitted post-generation edits (applied uniformly, disclosed on `/method`) are injecting the shared dataset import, injecting the shared mount point, and stripping a hardcoded page background.
+
+The gate runs on `npm run build` — including the deploy build — and standalone via `npm run verify:cells`. There is no CI workflow and no pre-commit hook (this repo has no remote yet).
 
 ## Docs
 

@@ -298,17 +298,28 @@ Each export carries its perf ceiling in a doc comment: N marks = N gradient defs
 
 ## 8. Integrity gate (`scripts/verify-cells.mjs`)
 
-Runs in CI and pre-commit. A cell that fails any check does not ship.
+**Enforcement (corrected 2026-07-26).** There is no CI workflow and no pre-commit
+hook. This repo has no git remote, so a workflow would never fire, and a hook
+lives in local config that a checkout does not carry — either would be a second
+false claim rather than a fix. The real enforcement points are `npm run build`
+(`build` = `verify:cells` → build registry → `astro build`), which is what the
+Vercel deploy runs, and `npm run verify:cells` standalone. So a failing cell
+cannot *ship*, but nothing stops it being *committed*. Add the workflow when the
+repo gets a remote (`docs/phase1-review.md` §7 recommendation 9).
 
 1. Every cell directory has `cell.json`, `chart.js`, `render.svg`.
 2. `cell.json.prompt` is non-empty and contains no placeholder text.
 3. Every row declares `mode` and at least one arm; declared arms all exist on disk.
-4. `mode: refine` cells in arms B/C name a `method.ranOn` that resolves to an existing arm-A cell.
+4. `mode: refine` cells in arms B/C name a `method.ranOn` that is exactly `<its own row>.A` and resolves to an existing arm-A cell.
 5. Every cell names a fixture that exists in `src/fixtures/`.
 6. `chart.js` hash matches the hash recorded at generation time — proves no hand-editing after the fact.
 7. Gap rows (`mark-04-glow`, `legend-03-art`, `mark-05-texture`) carry a `gap` field with a reason, and the site renders the gap panel rather than an empty slot.
+8. Every `cell.json` field agrees with the source that can contradict it: `id`/`arm`/`row` with the directory the cell lives at, `mode`/`rowTitle`/`family`/`method.kind`/`method.name`/`fixture` with `src/rows.json`, `method.kind` with the closed `default|skill|tool` set, and `runs`/`shipped` with the anti-cherry-picking rule (A: `runs >= 3` + `"median"`; B/C: `runs: 1` + `"only"`). *(Added 2026-07-26: the manifest was self-certifying, and the gate validated the directory's arm while the registry published the manifest's — so a cell could be republished as an arm its row never declared.)*
+9. `chart.js`'s own `meta.fixture` matches `cell.json.fixture` — the one fixture claim in a cell that cannot be edited without breaking check 6.
+10. The recorded `prompt` contains the artifact the runbook says that arm was sent: its baseline's `chart.js` verbatim for a `refine`-mode B/C cell, the fixture JSON verbatim otherwise. The prompt lives in the same file that records the code hash, so this is its only independent handle.
+11. `render.svg` is byte-identical to a fresh render of `chart.js`. *(Added 2026-07-26: the gallery publishes `render.svg`, so hashing `chart.js` alone left a recoloured, relabelled, or substituted SVG shipping unchallenged. ~3s for 24 cells.)*
 
-Check 6 is what makes §3.2 enforceable rather than aspirational.
+Checks 6, 8, 9, 10 and 11 together are what make §3.2 enforceable rather than aspirational; check 6 alone covered one of the three files in a cell.
 
 ## 9. Methodology and honesty (`/method`)
 
@@ -385,7 +396,7 @@ Mass production through proven machinery. `/method` and `/mine` land here. Textu
 | Arm A run-to-run variance reads as cherry-picking | 3 runs, median ships, disclosed per cell in the manifest. Arms B/C run once — see §3.3 |
 | A skill's Arm B is barely different from Arm A | Publish it anyway. A null result is a real finding and protects credibility |
 | Skill auto-activation is unreliable (~coin-flip per community reports) | Arm B always invokes the skill **explicitly** by name, never relies on auto-match. Recorded in the manifest |
-| Immutability gets quietly violated to make a cell look better | Hash check in `verify-cells.mjs` (§8 check 6), enforced in CI |
+| Immutability gets quietly violated to make a cell look better | `verify-cells.mjs` covers all three files in a cell: the `chart.js` hash (§8 check 6), a `render.svg` re-render (check 11), and manifest cross-validation (checks 8–10). Run by `npm run build`, including the deploy build — **not** by CI or a pre-commit hook; see §8 |
 | Vercel push ≠ autodeploy on some of the existing sites | Deploy step confirms with `npx vercel --prod --yes` if the GitHub hook doesn't fire |
 | Gap rows look like unfinished work | `/method` frames them as published gaps; each gap panel states what is missing and what would close it |
 
