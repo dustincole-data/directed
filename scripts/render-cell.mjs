@@ -2,13 +2,35 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { JSDOM } from "jsdom";
+import { sha256OfFile } from "./new-cell.mjs";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-export async function renderCell(cellDir) {
+/**
+ * Import a cell's `chart.js` as an ES module.
+ *
+ * The import URL is keyed on the file's own sha256 because Node's ESM loader
+ * caches by URL: without the key, a second import of the same path in one
+ * process silently returns the first module. verify-cells re-renders every cell
+ * in the same process (check 8), and the test suites rewrite a scratch
+ * `chart.js` in place between cases — both need the module the bytes on disk
+ * currently describe. Keying on content means identical bytes reuse the cache
+ * (so the re-render check costs one import per cell, not two) while edited
+ * bytes always load fresh.
+ */
+export async function loadCellModule(cellDir) {
+  const chart = join(resolve(cellDir), "chart.js");
+  return import(`${pathToFileURL(chart).href}?sha256=${await sha256OfFile(chart)}`);
+}
+
+/**
+ * Render a cell to SVG. Writes `render.svg` next to `chart.js` unless
+ * `{ write: false }` — the integrity gate renders without writing so it can
+ * byte-compare a fresh render against the committed artifact.
+ */
+export async function renderCell(cellDir, { write = true } = {}) {
   const dir = resolve(cellDir);
-  const modUrl = pathToFileURL(join(dir, "chart.js")).href;
-  const mod = await import(modUrl);
+  const mod = await loadCellModule(dir);
 
   if (typeof mod.render !== "function") {
     throw new Error(`${cellDir}: chart.js must export a render(svg, data) function`);
@@ -32,7 +54,7 @@ export async function renderCell(cellDir) {
   await mod.render(svg, fixture);
 
   const out = svg.outerHTML;
-  await writeFile(join(dir, "render.svg"), out, "utf8");
+  if (write) await writeFile(join(dir, "render.svg"), out, "utf8");
   return out;
 }
 
