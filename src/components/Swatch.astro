@@ -2,18 +2,26 @@
 // src/components/Swatch.astro
 import { armLabel, methodChip } from "../lib/labels";
 const { cell, nullResult = null } = Astro.props;
+
+// The default arm is the thing every other cell in its row is measured
+// against, so it reads as the recessed "before" rather than a peer.
+const isDefault = cell.method.kind === "default";
 ---
-<figure class="swatch">
-  <div class="swatch__render" set:html={cell.svg} />
+<figure class:list={["swatch", isDefault && "swatch--default"]}>
+  <a class="swatch__frame" href={`/cell/${cell.id}`}>
+    <div class="swatch__render" set:html={cell.svg} />
+  </a>
   <figcaption>
-    <span class="swatch__arm">{armLabel(cell.arm, cell.method.kind)}</span>
-    <code class="swatch__method">{methodChip(cell.method)}</code>
-    {cell.arm === "A" && <span class="swatch__runs">{cell.runs} runs · {cell.shipped}</span>}
-    <a class="swatch__link" href={`/cell/${cell.id}`}>prompt &amp; code →</a>
+    <span class="swatch__id">
+      <span class="swatch__arm">{armLabel(cell.arm, cell.method.kind)}</span>
+      <code class="swatch__method">{methodChip(cell.method)}</code>
+    </span>
+    <span class="swatch__meta">
+      {cell.arm === "A" && <span class="swatch__runs">{cell.runs} runs · {cell.shipped}</span>}
+      <a class="swatch__link" href={`/cell/${cell.id}`}>prompt &amp; code →</a>
+    </span>
   </figcaption>
   {nullResult && (
-    <p class="swatch__null">
-      <strong>Premise not engaged.</strong> {nullResult}
-    </p>
+    <p class="swatch__null"><b>Premise not engaged.</b> {nullResult}</p>
   )}
 </figure>

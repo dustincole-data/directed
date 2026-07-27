@@ -10,7 +10,10 @@ export function getStaticPaths() {
 const { cell, row } = Astro.props;
 ---
 <Base title={`${row.title} — ${cell.id} — Directed`}>
-  <p><a href={`/#${row.id}`}>← {row.title}</a></p>
-  <div class="swatch__render" set:html={cell.svg} />
-  <Provenance cell={cell} row={row} />
+  <article class="cell-page">
+    <a class="cell-page__back" href={`/#${row.id}`}>← {row.title}</a>
+    <h1>{cell.id}</h1>
+    <div class="swatch__render" set:html={cell.svg} />
+    <Provenance cell={cell} row={row} />
+  </article>
 </Base>

@@ -1,4 +1,10 @@
-/* src/styles/gallery.css */
+/* src/styles/gallery.css
+ *
+ * The chrome is deliberately achromatic. Every cell on this page is a real
+ * generated chart, and the charts are the only saturated thing here — a tinted
+ * shell would compete with the artefact it exists to frame. Hierarchy is
+ * carried by tone, weight, scale and space, on one neutral ramp.
+ */
 @font-face {
   font-family: "Archivo";
   font-style: normal;
@@ -13,36 +19,440 @@
   font-display: swap;
   src: url("/fonts/archivo-latin-600.woff2") format("woff2");
 }
-:root { --ink: #16161a; --muted: #6b6b73; --rule: #e4e4e8; --bg: #fdfdfc; }
-body { margin: 0; background: var(--bg); color: var(--ink);
-  font: 400 15px/1.5 Archivo, system-ui, sans-serif; }
-.row { border-top: 1px solid var(--rule); padding: 2.5rem 0; }
-.row__head h3 { margin: 0 0 .25rem; font-size: 1.0625rem; font-weight: 600; }
-.row__mode, .row__meta { margin: 0; color: var(--muted); font-size: .8125rem; }
-.row__cells { display: grid; gap: 1.25rem; margin-top: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-.swatch { margin: 0; }
-.swatch__render { background: #fff; border: 1px solid var(--rule); overflow-x: auto; }
-.swatch__render svg { display: block; max-width: 100%; height: auto; }
-.swatch figcaption { display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline;
-  margin-top: .5rem; font-size: .75rem; color: var(--muted); }
-.swatch__arm { font-weight: 600; color: var(--ink); }
-.gap { border: 1px dashed var(--rule); padding: 1rem; font-size: .8125rem; color: var(--muted); }
-.gap h4 { margin: 0 0 .5rem; color: var(--ink); }
+
+:root {
+  /* One neutral ramp, warm-free (chroma 0) so it never fights a chart's hues. */
+  --bg: #fdfdfc;
+  --surface: #ffffff;
+  --recessed: #f4f4f3;
+  --ink: #16161a;
+  --ink-soft: #3f3f46;
+  --muted: #6b6b73;
+  --rule: #e4e4e8;
+  --rule-strong: #c9c9d0;
+
+  --page-max: 92rem;
+  --page-pad: clamp(1.25rem, 4vw, 3rem);
+
+  /* ≥1.25 between steps; the ceiling stays small on purpose — this brand is a
+     small neutral grotesque, never a display hero. */
+  --t-xs: 0.6875rem;
+  --t-sm: 0.8125rem;
+  --t-base: 0.9375rem;
+  --t-md: 1.125rem;
+  --t-lg: clamp(1.375rem, 1.1rem + 1vw, 1.75rem);
+  --t-xl: clamp(1.875rem, 1.3rem + 2.4vw, 2.75rem);
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --z-nav: 100;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 var(--t-base) / 1.55 Archivo, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--page-pad) 6rem;
+}
+
+a { color: inherit; }
+
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+.skip:focus {
+  left: var(--page-pad);
+  top: 0.5rem;
+  z-index: calc(var(--z-nav) + 1);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0.5rem 0.75rem;
+}
+
+:where(a, button, summary):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* ---- masthead ---------------------------------------------------------- */
+
+.masthead { padding: clamp(3rem, 8vw, 6rem) 0 clamp(2rem, 4vw, 3rem); }
+.masthead h1 {
+  margin: 0;
+  font-size: var(--t-xl);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+.masthead__thesis {
+  margin: 1rem 0 0;
+  max-width: 46ch;
+  font-size: var(--t-md);
+  line-height: 1.45;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+.masthead__counts {
+  margin: 1.75rem 0 0;
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+.masthead__counts b { font-weight: 600; color: var(--ink); }
+
+/* The reading key. Stated once, here, because every row below is read against
+   it — repeating it per row would be noise. */
+.key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 2rem;
+  margin: 2.5rem 0 0;
+  padding: 1.125rem 0 0;
+  border-top: 1px solid var(--rule);
+  font-size: var(--t-sm);
+}
+.key div { max-width: 34ch; padding: 0.375rem 0; }
+.key dt { font-weight: 600; }
+.key dd { margin: 0.125rem 0 0; color: var(--muted); }
+
+/* ---- family nav -------------------------------------------------------- */
+
+.fnav {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  margin-bottom: 1rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--rule);
+}
+/* Already inside `.page`, so it inherits the container's width and padding. */
+.fnav__inner {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.fnav a {
+  flex: none;
+  padding: 0.75rem 0;
+  font-size: var(--t-sm);
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.fnav a:hover { color: var(--ink); border-bottom-color: var(--rule-strong); }
+.fnav a[data-populated="true"] { color: var(--ink); font-weight: 600; }
+.fnav a[data-populated="true"]:hover { border-bottom-color: var(--ink); }
+
+/* ---- family section ---------------------------------------------------- */
+
+.family { padding: clamp(2.5rem, 5vw, 4.5rem) 0 0; scroll-margin-top: 4rem; }
+.family__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--ink);
+}
+.family__head h2 {
+  margin: 0;
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.family__count {
+  font-size: var(--t-sm);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.family__blurb {
+  margin: 0.875rem 0 0;
+  max-width: 62ch;
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+/* ---- row --------------------------------------------------------------- */
+
+.row { padding: clamp(2rem, 4vw, 3.25rem) 0 0; scroll-margin-top: 4rem; }
+.row__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.375rem 0.875rem;
+}
+.row__head h3 {
+  margin: 0;
+  font-size: var(--t-md);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.row__fixture {
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+.row__fixture code {
+  font: inherit;
+  padding: 0.1rem 0.3rem;
+  background: var(--recessed);
+  border: 1px solid var(--rule);
+}
+.row__tag {
+  font-size: var(--t-xs);
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.row__cells {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: start;
+}
+
+/* ---- swatch ------------------------------------------------------------ */
+/*
+ * The default arm is recessed and the directed arms sit forward. That contrast
+ * is the whole argument of the page, so it is carried structurally — tone,
+ * border weight, and which label is promoted — rather than by a colour badge.
+ */
+
+/* Cells are 640px wide by contract; capping here keeps a two-arm row from
+   upscaling its charts to fill the grid while a three-arm row shrinks them. */
+.swatch { margin: 0; display: flex; flex-direction: column; max-width: 41rem; }
+.swatch__frame {
+  display: block;
+  /* The mat, not the chart, carries the arm's status: every cell brings its own
+     background rect (some light, some near-black), so tinting *through* the SVG
+     would read differently on every row. */
+  padding: 0.625rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  text-decoration: none;
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.swatch__frame:hover {
+  border-color: var(--rule-strong);
+  box-shadow: 0 6px 22px -14px rgb(22 22 26 / 0.5);
+  transform: translateY(-2px);
+}
+.swatch__render { overflow-x: auto; }
+.swatch__render svg { display: block; width: 100%; height: auto; }
+
+.swatch--default .swatch__frame {
+  background: var(--recessed);
+  border-style: dashed;
+}
+
+/* Two groups — identity left, meta right — so a long method name pushes the
+   link onto its own line instead of leaving every caption a different height. */
+.swatch figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.75rem;
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+.swatch__id,
+.swatch__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.375rem 0.625rem;
+}
+.swatch__arm {
+  font-weight: 600;
+  font-size: var(--t-sm);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.swatch--default .swatch__arm { color: var(--muted); }
+.swatch__method {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: 0.15rem 0.4rem;
+  background: var(--recessed);
+  border: 1px solid var(--rule);
+}
+.swatch--default .swatch__method { font-weight: 400; }
+.swatch__runs { font-variant-numeric: tabular-nums; }
+.swatch__link {
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.swatch__frame:hover + figcaption .swatch__link,
+.swatch__link:hover { color: var(--ink); text-decoration: underline; }
+
 /* A cell that shipped without moving its row's lever. Sits under the render it
-   qualifies, in the reading colour rather than the muted one — a reader who
-   sees the swatch has to see this too, or the gallery is claiming a difference
-   it did not make. */
-.swatch__null { margin: .5rem 0 0; padding: .5rem .625rem; font-size: .75rem;
-  line-height: 1.45; color: var(--ink); border-left: 2px solid var(--ink); background: #f4f4f2; }
-.null-result { margin: 1.5rem 0 0; padding: 1rem; border: 1px solid var(--ink); font-size: .875rem; }
-.null-result h3 { margin: 0 0 .5rem; font-size: .9375rem; }
-.null-result p { margin: 0 0 .5rem; }
-.null-result__note { margin: 0; color: var(--muted); font-size: .8125rem; }
-.prov { margin: 1.5rem 0 0; display: grid; grid-template-columns: max-content 1fr;
-  gap: .25rem 1rem; font-size: .875rem; }
+   qualifies, at full ink — a reader who sees the swatch has to see this too, or
+   the gallery is claiming a difference it did not make. */
+.swatch__null {
+  margin: 0.625rem 0 0;
+  padding: 0.625rem 0.75rem;
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  background: var(--recessed);
+  border: 1px solid var(--rule);
+  border-top: 2px solid var(--ink);
+}
+.swatch__null b { color: var(--ink); }
+
+/* ---- gap panel & planned rows ------------------------------------------ */
+
+.gap {
+  align-self: stretch;
+  max-width: 41rem;
+  padding: 1.25rem;
+  border: 1px dashed var(--rule-strong);
+  background: var(--recessed);
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+.gap h4 {
+  margin: 0 0 0.5rem;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--ink);
+}
+.gap p { margin: 0; }
+
+/* The 39 rows that exist in the inventory but have no cells yet. They stay
+   visible — the scope is part of the honesty — but as one dense list per
+   family, not 39 empty sections that bury the nine real ones. */
+.planned {
+  margin-top: clamp(2rem, 4vw, 3rem);
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+/* Nothing built in this family yet: keep the anchor and every row title, drop
+   the section furniture that implies there is work below it. */
+.family--planned { padding-top: clamp(1.5rem, 3vw, 2.25rem); }
+.family--planned .family__head { border-bottom-width: 1px; border-bottom-color: var(--rule); }
+.family--planned .family__head h2 { font-size: var(--t-md); color: var(--muted); }
+.family--planned .planned { margin-top: 0.75rem; padding-top: 0; border-top: 0; }
+.planned h4 {
+  margin: 0 0 0.625rem;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--muted);
+}
+.planned ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.25rem 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  font-size: var(--t-sm);
+}
+.planned li {
+  color: var(--muted);
+  padding: 0.1875rem 0;
+  text-wrap: pretty;
+}
+/* Kept next to the title, not flung to the column edge: at this width a
+   right-aligned count reads as belonging to the neighbouring column. */
+.planned li b {
+  font-weight: 400;
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  /* No opacity de-emphasis here: at 11px it blends to ~3.15:1, under the 4.5:1
+     floor. The smaller size already does the de-emphasis. */
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ---- cell page --------------------------------------------------------- */
+
+.cell-page { padding-top: 2.5rem; }
+.cell-page__back {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  font-size: var(--t-sm);
+  color: var(--muted);
+  text-decoration: none;
+}
+.cell-page__back:hover { color: var(--ink); }
+.cell-page h1 {
+  margin: 0 0 1.5rem;
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.cell-page .swatch__render {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  max-width: 42rem;
+}
+
+.prov {
+  margin: 2rem 0 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.375rem 1.5rem;
+  font-size: var(--t-sm);
+  max-width: 60rem;
+}
 .prov dt { font-weight: 600; color: var(--ink); }
 .prov dd { margin: 0; color: var(--muted); }
-.prov__prompt { overflow-x: auto; border: 1px solid var(--rule); background: #fff;
-  padding: 1rem; margin: .5rem 0 1.5rem; white-space: pre;
-  font: 400 .8125rem/1.5 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+.prov__prompt {
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  padding: 1rem;
+  margin: 0.5rem 0 1.5rem;
+  white-space: pre;
+  font: 400 var(--t-sm) / 1.5 ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+.cell-page h3 {
+  margin: 2rem 0 0;
+  font-size: var(--t-base);
+  font-weight: 600;
+}
+
+.null-result {
+  margin: 1.75rem 0 0;
+  padding: 1.25rem;
+  border: 1px solid var(--ink);
+  font-size: var(--t-sm);
+  max-width: 60rem;
+}
+.null-result h3 {
+  margin: 0 0 0.5rem;
+  font-size: var(--t-base);
+  font-weight: 600;
+}
+.null-result p { margin: 0 0 0.625rem; }
+.null-result__note { margin: 0; color: var(--muted); font-size: var(--t-xs); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .swatch__frame:hover { transform: none; }
+}

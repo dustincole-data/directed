@@ -11,5 +11,8 @@ const { title, description } = Astro.props;
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
   </head>
-  <body><main style="max-width:78rem;margin:0 auto;padding:2rem 1.25rem"><slot /></main></body>
+  <body>
+    <a class="skip" href="#gallery">Skip to the gallery</a>
+    <main class="page"><slot /></main>
+  </body>
 </html>

@@ -2,19 +2,23 @@
 // src/components/RowStrip.astro
 import Swatch from "./Swatch.astro";
 import GapPanel from "./GapPanel.astro";
-import { modeBadge } from "../lib/labels";
 import { nullResultFor } from "../lib/registry";
 const { row } = Astro.props;
+
+// Default arm first, then the directed arms, so every row reads the same way:
+// what Claude produced on its own, then what it produced when directed.
+const cells = [...row.cells].sort((a, b) => a.arm.localeCompare(b.arm));
 ---
 <section class="row" id={row.id}>
   <header class="row__head">
     <h3>{row.title}</h3>
-    <p class="row__mode">{modeBadge(row.mode)}</p>
-    <p class="row__meta">fixture: <code>{row.fixture}</code></p>
+    {/* Both terms are defined once in the masthead key — spelling the sentence
+        out on all 12 rows turns the explanation into wallpaper. */}
+    <span class="row__tag">{row.mode}</span>
+    <span class="row__fixture">fixture <code>{row.fixture}</code></span>
   </header>
-  {row.cells.length === 0 && !row.gap && <p class="row__todo">Not generated yet.</p>}
   <div class="row__cells">
-    {row.cells.map((cell) => <Swatch cell={cell} nullResult={nullResultFor(cell, row)} />)}
+    {cells.map((cell) => <Swatch cell={cell} nullResult={nullResultFor(cell, row)} />)}
     {row.gap && <GapPanel reason={row.gap} />}
   </div>
 </section>
