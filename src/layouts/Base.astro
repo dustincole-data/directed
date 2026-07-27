@@ -1,7 +1,7 @@
 ---
 // src/layouts/Base.astro
 import "../styles/gallery.css";
-const { title, description } = Astro.props;
+const { title, description, skipTo = "#gallery", skipLabel = "Skip to the gallery" } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -12,7 +12,7 @@ const { title, description } = Astro.props;
     {description && <meta name="description" content={description} />}
   </head>
   <body>
-    <a class="skip" href="#gallery">Skip to the gallery</a>
+    <a class="skip" href={skipTo}>{skipLabel}</a>
     <main class="page"><slot /></main>
   </body>
 </html>

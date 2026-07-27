@@ -111,6 +111,17 @@ a { color: inherit; }
 }
 .masthead__counts b { font-weight: 600; color: var(--ink); }
 
+/* The one link off the gallery. It sits with the counts because it is what a
+   reader checks those counts against. */
+.masthead__method { margin: 0.875rem 0 0; font-size: var(--t-sm); }
+.masthead__method a {
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 2px solid var(--rule-strong);
+  transition: border-color 0.18s var(--ease);
+}
+.masthead__method a:hover { border-bottom-color: var(--ink); }
+
 /* The reading key. Stated once, here, because every row below is read against
    it — repeating it per row would be noise. */
 .key {
@@ -284,7 +295,8 @@ a { color: inherit; }
   letter-spacing: -0.01em;
 }
 .swatch--default .swatch__arm { color: var(--muted); }
-.swatch__method {
+.swatch__method,
+.nulls__method {
   font: inherit;
   font-weight: 600;
   color: var(--ink-soft);
@@ -446,6 +458,86 @@ a { color: inherit; }
 }
 .null-result p { margin: 0 0 0.625rem; }
 .null-result__note { margin: 0; color: var(--muted); font-size: var(--t-xs); }
+
+/* ---- method page ------------------------------------------------------- */
+/*
+ * Prose in the gallery's own chrome: same neutral ramp, same type scale, and
+ * the same 2px ink rule a family head uses, at reading measure. Nothing here is
+ * a second design language — this page is the gallery's own disclosure, and a
+ * reader arriving from a swatch should not feel they left the site.
+ */
+
+/* A reading column, not the gallery's full bleed: the family rule runs edge to
+   edge because a swatch grid follows it, and nothing here does. */
+.method { padding: clamp(2.5rem, 5vw, 4.5rem) 0 0; scroll-margin-top: 4rem; max-width: 74ch; }
+.method h2 {
+  margin: 0 0 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--ink);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.method h3 {
+  margin: 2rem 0 0.625rem;
+  font-size: var(--t-base);
+  font-weight: 600;
+}
+.method p,
+.method li { text-wrap: pretty; }
+.method p { margin: 0 0 0.875rem; }
+.method ol,
+.method ul { margin: 0 0 0.875rem; padding-left: 1.25rem; }
+.method li { margin: 0 0 0.625rem; }
+.method b { font-weight: 600; }
+.method code {
+  font: 400 var(--t-sm) / 1.5 ui-monospace, "SFMono-Regular", Consolas, monospace;
+  padding: 0.1rem 0.3rem;
+  background: var(--recessed);
+  border: 1px solid var(--rule);
+}
+
+/* One card per published null, carrying the registry's own disclosure string —
+   the same text the gate re-derives under every render. Same treatment as the
+   banner under a swatch, so a reader recognises it from the gallery. */
+.nulls {
+  list-style: none;
+  margin: 1.5rem 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+.nulls__item {
+  margin: 0;
+  padding: 1rem 1.125rem;
+  background: var(--recessed);
+  border: 1px solid var(--rule);
+  border-top: 2px solid var(--ink);
+}
+.nulls__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.375rem 0.75rem;
+  margin: 0 0 0.5rem;
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+.nulls__id {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+.nulls__id:hover { text-decoration: underline; }
+.nulls__row { color: var(--ink-soft); }
+.nulls__why {
+  margin: 0;
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

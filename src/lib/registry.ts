@@ -63,6 +63,38 @@ export function nullResultFor(cell: RegistryCell, row: RegistryRow): string | nu
   return row.declaredArms.find((a) => a.arm === cell.arm)?.nullResult ?? null;
 }
 
+/**
+ * Every arm in the gallery that ships with a declared null result, in registry
+ * order, paired with the row it belongs to.
+ *
+ * `/method` publishes this rather than a hand-written list so the methodology
+ * page cannot state a different number, or a different reason, than the cells
+ * themselves — the disclosure text here is the same string check 12 enforces
+ * against a live probe on every build.
+ *
+ * An arm whose cell has not been generated is skipped: a null result is a fact
+ * about a published render, and there is nothing to link a reader to yet.
+ */
+export function declaredNulls(reg: Registry = getRegistry()): {
+  id: string;
+  arm: "A" | "B" | "C";
+  method: string;
+  nullResult: string;
+  row: RegistryRow;
+}[] {
+  return reg.rows.flatMap((row) =>
+    row.declaredArms
+      .filter((a) => a.nullResult && row.cells.some((c) => c.arm === a.arm))
+      .map((a) => ({
+        id: `${row.id}.${a.arm}`,
+        arm: a.arm,
+        method: a.method,
+        nullResult: a.nullResult!,
+        row,
+      })),
+  );
+}
+
 /** Coarse structural diff: which SVG element types the treated arm added or dropped. */
 export function diffAgainstBaseline(
   cell: RegistryCell,

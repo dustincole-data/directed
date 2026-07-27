@@ -1,0 +1,322 @@
+---
+// src/pages/method.astro
+import Base from "../layouts/Base.astro";
+import { getRegistry, declaredNulls } from "../lib/registry";
+
+const reg = getRegistry();
+
+// The counts and the null-result list are read out of the same registry the
+// gallery is built from. A methodology page maintained by hand goes stale the
+// first time a cell is regenerated, and the one thing this page cannot afford
+// is to be the least accurate document on the site.
+const nulls = declaredNulls(reg);
+const builtRows = reg.rows.filter((r) => r.cells.length > 0).length;
+const builtCells = reg.rows.reduce((n, r) => n + r.cells.length, 0);
+const gapRows = reg.rows.filter((r) => r.gap);
+
+const bareDataviz = nulls.filter((n) => n.method.startsWith("dataviz")).length;
+const bareImpeccable = nulls.filter((n) => n.method.startsWith("/impeccable")).length;
+
+const sections = [
+  { id: "baseline", nav: "Baseline", title: "The baseline is not a stock Claude Code" },
+  { id: "contract", nav: "Contract", title: "A second contamination source: the contract names a library" },
+  { id: "runs", nav: "Run counts", title: "Run counts" },
+  { id: "edits", nav: "Permitted edits", title: "Permitted post-generation edits" },
+  { id: "mode", nav: "Refine vs from-scratch", title: "Refine vs from-scratch" },
+  { id: "prompts", nav: "Prompt change", title: "A Phase 1 / Phase 2 prompt difference" },
+  { id: "nulls", nav: "Null results", title: `${nulls.length} cells whose premise was never engaged` },
+  { id: "gaps", nav: "Gaps", title: "Gaps published as gaps" },
+  { id: "refuted", nav: "Refuted claims", title: "Claims that failed verification" },
+  { id: "benchmark", nav: "Not a benchmark", title: "Not a benchmark" },
+];
+
+// Listed so no reader picks them up secondhand. Each failed a three-vote
+// adversarial check during research; failing is not proof of falsehood, it
+// means this project does not rely on them.
+const refuted = [
+  "the glow / halo filter recipe (its feGaussianBlur + feMerge wiring, 0–3)",
+  "a “three annotations, five maximum” density budget",
+  "D3 line-count figures",
+  "a 175-chart / 100%-flawed / 2.47-flaws-per-chart defect baseline",
+  "“conversational refinement mostly fails”",
+  "“the requester’s vocabulary is the binding constraint”",
+  "“models cannot judge aesthetics”",
+  "“nine of ten practitioners export to Illustrator”",
+  "“the annotation layer is what defines editorial graphics”",
+];
+---
+<Base
+  title="Method — Directed"
+  description="How the cells in this gallery are generated, what contaminates the comparison, which claims failed verification, and every cell that shipped without moving the lever its row names."
+  skipTo="#method"
+  skipLabel="Skip to the disclosures"
+>
+  <header class="masthead">
+    <h1>Method</h1>
+    <p class="masthead__thesis">
+      How a cell gets made, what the comparison cannot claim, and everything about
+      this project that would weaken the result if you did not know it. The
+      disclosures that cost something are the ones worth reading.
+    </p>
+    <p class="masthead__counts">
+      <b>{builtRows}</b> of {reg.rows.length} rows built · <b>{builtCells}</b> cells ·
+      <b>{nulls.length}</b> published as null results · the counts and every null-result
+      disclosure below are read out of the registry the gallery is built from, not
+      maintained by hand.
+    </p>
+  </header>
+
+  <nav class="fnav" aria-label="Sections">
+    <div class="fnav__inner">
+      <a href="/">← The gallery</a>
+      {sections.map((s) => <a href={`#${s.id}`} data-populated="true">{s.nav}</a>)}
+    </div>
+  </nav>
+
+  <div id="method">
+    <section class="method" id="baseline">
+      <h2>{sections[0].title}</h2>
+      <p>
+        The global <code>CLAUDE.md</code> (<code>~/.claude/CLAUDE.md</code>) on the machine
+        that generated these cells routes all website and frontend work to two design
+        skills. Every subagent spawned on this machine inherits that file, regardless of
+        its working directory — running Arm A from a scratch directory keeps <i>project</i>
+        <code>CLAUDE.md</code> files and their skills out of scope, but it does not touch
+        the global one.
+      </p>
+      <p>
+        Arm A therefore represents <b>Claude Code as configured by a developer who already
+        cares about design</b>, not a fresh install. It is naive about this project
+        specifically — no dataviz research, no craft module, no reference images, no
+        project conventions — but it is not a stock Claude Code baseline, and it is not
+        naive about design in general.
+      </p>
+      <p>
+        Two things follow. First, the gap this gallery shows is a <b>floor</b>, not a
+        ceiling: a stock install would likely start further back. Second, closing this
+        would require generating baselines through the Claude API with a bare system
+        prompt, which costs money and needs explicit approval. Until that happens, the
+        disclosure stands in for the isolation.
+      </p>
+    </section>
+
+    <section class="method" id="contract">
+      <h2>{sections[1].title}</h2>
+      <p>
+        <code>cells/_contract.md</code> — handed identically to every arm, Arm A included —
+        says: <i>“Use <code>svg.ownerDocument</code> and <code>createElementNS</code>, or a
+        d3 selection over it.”</i> That sentence names a specific library to the naive
+        baseline generator before it has written a line of code.
+      </p>
+      <p>
+        This is harmless for Phase 1: none of the nine Phase 1 rows is about library
+        choice. It is not harmless for <code>lib-01-ceiling</code> — preset chart library
+        vs. Observable Plot’s function-mark escape hatch vs. raw D3/SVG, all on the same
+        brief — where library choice is the entire subject of the row. A contract that
+        pre-names d3 to that row’s Arm A puts a thumb on exactly the scale it is meant to
+        measure.
+      </p>
+      <p>
+        Before that row is generated it needs either a contract variant that describes the
+        DOM access pattern (a real <code>&lt;svg&gt;</code> element in a jsdom document)
+        without naming a library, or an explicit caveat attached to that row’s comparison
+        disclosing that Arm A was told about d3 and its competitors were not. It is
+        disclosed here so it is caught before the row ships, not after.
+      </p>
+    </section>
+
+    <section class="method" id="runs">
+      <h2>{sections[2].title}</h2>
+      <p>
+        Arm A runs three times and the median result ships, because one generation is not
+        “the default”. <b>Median is a mechanical rule, not a judgment call</b>: all three
+        runs are rendered, the run with the <b>median total SVG element count</b> ships,
+        and a tie is broken by the smaller <code>chart.js</code>. Anyone holding the three
+        runs can re-derive the same choice.
+      </p>
+      <p>
+        That is the point — a subjective “median-looking” pick would let the prettiest
+        baseline ship, which is exactly what this gallery claims not to do. The discarded
+        runs are not committed, so the selection is reproducible from the runs, not from
+        the repository.
+      </p>
+      <p>
+        Arms B and C run <b>exactly once</b>. Shipping the prettiest of several directed
+        attempts would manufacture the result.
+      </p>
+    </section>
+
+    <section class="method" id="edits">
+      <h2>{sections[3].title}</h2>
+      <p>
+        Generated code is immutable. Three edits are permitted, applied uniformly to every
+        arm and hash-recorded before they land:
+      </p>
+      <ol>
+        <li>Injecting the shared dataset import.</li>
+        <li>Injecting the shared mount point / container id.</li>
+        <li>Removing a hardcoded page background that would fight the gallery shell.</li>
+      </ol>
+      <p>
+        Anything else is a regeneration, versioned <code>-v2</code>, with the original
+        kept. The integrity gate re-hashes <code>chart.js</code> and re-renders every
+        <code>render.svg</code> on each build, so a fourth edit fails the build rather than
+        shipping quietly.
+      </p>
+    </section>
+
+    <section class="method" id="mode">
+      <h2>{sections[4].title}</h2>
+      <p>
+        Each row declares one. <b>refine</b> rows run the treated arms <i>on the default
+        arm’s output</i>, so the only difference is the lever. <b>from-scratch</b> rows
+        generate independently, because there the lever <i>is</i> the generation decision —
+        library choice, radial vs cartesian, glyph design.
+      </p>
+    </section>
+
+    <section class="method" id="prompts">
+      <h2>{sections[5].title}</h2>
+      <p>
+        <code>cells/_contract.md</code> states four constraints. Phase 1’s prompt templates
+        transmitted only some of them: no arm that generated the first 24 cells was told
+        “do not call <code>document</code> globally”, “no fonts loaded at render time”, or
+        “renders must be byte-stable across runs”. All 24 shipped cells satisfy all three
+        anyway — verified by re-rendering every cell byte-identically and by checking that
+        none loads a font — but that was luck, not instruction.
+      </p>
+      <p>
+        The templates in the generation runbook now state all four, so <b>Phase 2’s prompts
+        are not byte-identical to Phase 1’s</b>. The addition is a harness constraint, never
+        a design hint, and it is stated here rather than slipped in because Arm A’s prompt
+        is the experiment’s control. Byte-stability in particular is now enforced: the
+        integrity gate re-renders each cell and byte-compares against the committed
+        <code>render.svg</code>.
+      </p>
+    </section>
+
+    <section class="method" id="nulls">
+      <h2>{sections[6].title}</h2>
+      <p>
+        Every treated cell in this gallery differs from its baseline. {nulls.length} of them
+        do not differ <i>in the dimension their row’s title names</i>, which is a weaker
+        result than the row claims. They ship anyway, labelled, because a null result is a
+        finding — “the named skill, invoked as its documentation says to, did not touch this
+        lever” is the most load-bearing thing this gallery can report.
+      </p>
+      <p>
+        The first three passed the Phase 1 gate untouched: every check it ran asked whether a
+        cell was well-formed and honestly provenanced, and none asked whether it engaged the
+        lever its row exists to demonstrate. The gate now runs a <b>premise probe</b> (check
+        12) that compares each treated arm against its baseline on exactly that dimension and
+        fails when the two are identical. The declaration is enforced in both directions — a
+        cell whose lever <i>did</i> move is not allowed to carry the disclosure — so it cannot
+        go stale. A probe can only prove a lever moved, never that it moved well. It is a
+        floor under the claim these pages make, not a judgement of the design.
+      </p>
+
+      <ul class="nulls">
+        {nulls.map((n) => (
+          <li class="nulls__item">
+            <p class="nulls__head">
+              <a class="nulls__id" href={`/cell/${n.id}`}>{n.id} →</a>
+              <span class="nulls__row">{n.row.title}</span>
+              <code class="nulls__method">{n.method}</code>
+              <span class="nulls__probe">probe: {n.row.premise}</span>
+            </p>
+            <p class="nulls__why">{n.nullResult}</p>
+          </li>
+        ))}
+      </ul>
+
+      <h3>What the {nulls.length} of them have in common</h3>
+      <p>
+        Every one is a <b>named skill invoked with no brief</b> — {bareDataviz} bare
+        <code>dataviz</code> invocations and {bareImpeccable} bare <code>/impeccable</code>
+        ones. The pattern worth stating, and worth holding loosely at n={nulls.length}: a
+        named skill invoked with no brief reliably changes <i>something</i> — usually
+        palette, annotation density and layout, the things a chart skill reaches for first —
+        and does not reliably change the specific lever a row was built to isolate.
+      </p>
+      <p>
+        <code>medium-02-theme</code> adds a second mechanism next to that one: <b>a skill’s
+        remit may simply not be the thing the row’s title assumed it was.</b> Asked to
+        <i>adapt</i> a chart, the skill read adapt as responsive sizing and changed not one
+        of 41 colours. A row title can silently encode a guess about what a skill means.
+        Both are claims about how these skills behave unprompted, which is exactly what the
+        default-versus-directed comparison exists to measure. Neither is evidence that the
+        skills are bad at the lever when asked.
+      </p>
+
+      <h3>Three fixes that were refused</h3>
+      <p>
+        The probe found these cells; it did not get to delete them. Three ways to make the
+        nulls disappear were available, and naming them is part of the disclosure:
+      </p>
+      <ol>
+        <li>
+          <b>Regenerating them under lever-forcing prompts.</b> That measures the skill
+          <i>plus an explicit brief</i> while the published method still reads
+          <code>dataviz</code> or <code>/impeccable craft</code>. The whole question these
+          rows ask is what a named skill does when it is simply run — telling it the answer
+          first and publishing the result under the same label would manufacture the finding.
+        </li>
+        <li>
+          <b>Relabelling <code>type-04-numerals</code> as an annotation-density row.</b> Its
+          Arm B edit is real and would fit that title. But choosing the hypothesis after
+          seeing the result is exactly the move this project exists to argue against, and it
+          would quietly retire “tabular vs proportional figures” — a lever nothing has yet
+          tested — from the 48-row inventory. The row keeps its title and keeps its null.
+        </li>
+        <li>
+          <b>Re-running <code>mark-07-overlap</code> against a fixture that overplots.</b>
+          Measured from the committed <code>render.svg</code>,
+          <b>the baseline does not overplot</b>: its eight bubbles sit on one row at
+          <code>cy=210</code> and every pair is disjoint — the tightest clearance,
+          Jupiter to Saturn, is about 7px. Arm A
+          had also already sorted its marks by descending radius and set
+          <code>fill-opacity</code> before any skill ran. So neither treated arm declined to
+          fix overplotting; there was no overplotting in front of it. That is a defect in the
+          <i>row</i>, not in the skills — testing “opacity, jitter, ordering” needs a fixture
+          that actually overplots, which <code>hero8</code> at 640×400 is not. Swapping the
+          fixture now would quietly re-run the row against a different chart after seeing the
+          result, so the row is kept as generated with both nulls published, and the fixture
+          defect is recorded here.
+        </li>
+      </ol>
+    </section>
+
+    <section class="method" id="gaps">
+      <h2>{sections[7].title}</h2>
+      <p>
+        Three techniques are shown as unanswered rather than filled with a guess: the
+        <b>glow / halo</b> filter recipe (its <code>feGaussianBlur</code> +
+        <code>feMerge</code> wiring failed a three-vote verification, 0–3),
+        <b>texture</b>, and <b>legend-as-art</b>. Each of the {gapRows.length} gap rows
+        states on the gallery what is missing and what would close it.
+      </p>
+    </section>
+
+    <section class="method" id="refuted">
+      <h2>{sections[8].title}</h2>
+      <p>
+        Listed so no reader picks them up secondhand:
+      </p>
+      <ul>
+        {refuted.map((claim) => <li>{claim}</li>)}
+      </ul>
+      <p>
+        Each failed a three-vote adversarial check. <b>Failing is not proof of falsehood</b> —
+        it means this project does not rely on them.
+      </p>
+    </section>
+
+    <section class="method" id="benchmark">
+      <h2>{sections[9].title}</h2>
+      <p>
+        No scores. No winner declared per row. Some rows show almost no difference; those
+        ship too.
+      </p>
+    </section>
+  </div>
+</Base>
