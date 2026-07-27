@@ -454,6 +454,7 @@
     "title": "Gridlines: whether, how faint, which direction",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "mark-geometry",
     "phase": 2,
     "arms": [
       {
@@ -554,6 +555,7 @@
     "title": "Sort order as an editorial decision",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "mark-geometry",
     "phase": 2,
     "arms": [
       {
@@ -724,6 +726,7 @@
     "title": "Detached legend vs labels pinned to marks",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "element-composition",
     "phase": 2,
     "arms": [
       {
@@ -905,6 +908,7 @@
     "title": "Dark / light theming of the same chart",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "color",
     "phase": 2,
     "arms": [
       {
@@ -945,6 +949,7 @@
     "title": "Units and rounding",
     "mode": "refine",
     "fixture": "table12",
+    "premise": "numeric-text",
     "phase": 2,
     "arms": [
       {
@@ -955,7 +960,8 @@
       {
         "arm": "B",
         "kind": "skill",
-        "method": "dataviz"
+        "method": "dataviz",
+        "nullResult": "dataviz replaced the entire palette, added 12 path elements and moved mark geometry — a large, real edit — but wrote every number exactly as Arm A did: same rounding, same units, same separators, so both arms probe identically on numeric-text and numeric-format. Units and rounding is the one thing this row names and the one thing the skill left alone."
       }
     ]
   },

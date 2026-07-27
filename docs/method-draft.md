@@ -152,6 +152,24 @@ Two available fixes were rejected, and naming them is part of the disclosure:
   nothing has yet tested — from the 48-row inventory. The row keeps its title
   and keeps its null.
 
+### A fourth, from Phase 2
+
+`num-01-units.B` — the row is "Units and rounding", the method is a bare
+`dataviz` invocation. The skill replaced the entire palette, added twelve `path`
+elements and moved the mark geometry: a large, genuine edit. It also wrote every
+number exactly as the baseline did — same rounding, same units, same
+separators — so both arms reduce to an identical `numeric-text` probe. It ships
+declared, like the other three.
+
+That makes three of the four nulls a bare `dataviz` invocation
+(`type-04-numerals.B`, `mark-07-overlap.B`, `num-01-units.B`). The pattern worth
+stating, and worth holding loosely at n=4: a named skill invoked with no brief
+reliably changes *something* — usually palette and layout, the things a chart
+skill reaches for first — and does not reliably change the specific lever a row
+was built to isolate. That is a claim about how these skills behave unprompted,
+which is exactly what the default-versus-directed comparison exists to measure;
+it is not evidence that the skills are bad at the lever when asked.
+
 `mark-07-overlap` has a further, more interesting cause, found while deciding
 this and not previously recorded: **the baseline does not overplot.** Its eight
 bubbles sit on one row at `cy=210`, and measured from the committed

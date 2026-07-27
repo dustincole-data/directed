@@ -128,6 +128,30 @@ export const PROBES = {
     ),
 
   /**
+   * How numbers are *written* — units, rounding, separators — as a set of
+   * format signatures rather than the strings themselves.
+   *
+   * Each digit run collapses to `N<length>`, so "73.48" reads as "N2.N2" and
+   * "73.5 yrs" as "N2.N1 yrs". Three consequences, all deliberate:
+   *
+   * - Rounding registers (N2.N2 -> N2.N1), a unit registers, and a thousands
+   *   separator registers (N6 -> N3,N3). That is the whole of "units and
+   *   rounding".
+   * - The *values* do not, so a re-sort or a different row order is not
+   *   mistaken for a formatting change — every arm renders the same fixture.
+   * - Deleting labels does not, as long as one of each format survives. This is
+   *   the type-04-numerals lesson written into the probe: that cell cut 24
+   *   numeric annotations to 2 and a count-sensitive probe would have called it
+   *   engagement.
+   */
+  "numeric-text": (root) =>
+    sortedSet(
+      walk(root)
+        .filter((el) => TEXT_TAGS.has(el.localName) && /\d/.test(el.textContent ?? ""))
+        .map((el) => (el.textContent ?? "").trim().replace(/\d+/g, (run) => `N${run.length}`)),
+    ),
+
+  /**
    * Gradient definitions: parameters and stop ramps, ignoring `id` so that
    * renaming a gradient is not mistaken for re-specifying one, and ignoring the
    * marks that reference them so that moving a mark is not either.

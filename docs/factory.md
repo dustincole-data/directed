@@ -271,6 +271,7 @@ so declare it before you generate, not after. The probes available today:
 | `font-family` | the set of font stacks in play | typeface choice |
 | `font-size` | the set of size tiers (not their frequency) | type scale and hierarchy |
 | `numeric-format` | `font-variant-numeric` / `font-feature-settings` / family, on digit-bearing text only | tabular vs. proportional figures |
+| `numeric-text` | how numbers are *written* — each digit run collapsed to `N<length>`, so `73.48` reads `N2.N2` — as a set, ignoring values and label count | units, rounding, separators, locale |
 | `color` | every fill / stroke / stop-colour, in document order | palettes, ramps, accent discipline |
 | `gradient` | gradient parameters and stop ramps, ignoring `id` | gradient treatment |
 | `mark-geometry` | position, size and opacity of every mark, in draw order | overplotting, jitter, ordering, size encoding |

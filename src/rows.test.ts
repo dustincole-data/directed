@@ -63,13 +63,19 @@ describe("rows", () => {
   // A `nullResult` is the only way a treated cell gets past the premise probe,
   // so the set of arms carrying one is pinned here rather than left to drift: a
   // fourth appearing is a claim about the gallery, not a refactor.
-  it("only the three Phase 1 arms whose lever never moved declare a null result", () => {
+  it("pins exactly which arms shipped without moving their lever", () => {
+    // Deliberately a hard-coded list. A new entry is a claim about the gallery
+    // — "another named skill left another row's lever untouched" — and should
+    // fail here so it gets stated on /method, not absorbed as a refactor.
+    // num-01-units.B is the Phase 2 addition: dataviz replaced the palette and
+    // the mark geometry but wrote every number exactly as the baseline did.
     const declared = ROWS.flatMap((r) =>
       r.arms.filter((a) => a.nullResult).map((a) => `${r.id}.${a.arm}`),
     );
     expect(declared.sort()).toEqual([
       "mark-07-overlap.B",
       "mark-07-overlap.C",
+      "num-01-units.B",
       "type-04-numerals.B",
     ]);
   });

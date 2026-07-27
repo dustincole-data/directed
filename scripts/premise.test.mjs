@@ -46,6 +46,55 @@ describe("probeSvg mark-geometry", () => {
   });
 });
 
+describe("probeSvg numeric-text", () => {
+  it("changes when rounding changes", () => {
+    const a = svg("<text>73.48</text>");
+    const b = svg("<text>73.5</text>");
+    expect(probeSvg("numeric-text", b)).not.toBe(probeSvg("numeric-text", a));
+  });
+
+  it("changes when a unit is added", () => {
+    const a = svg("<text>73.48</text>");
+    const b = svg("<text>73.48 years</text>");
+    expect(probeSvg("numeric-text", b)).not.toBe(probeSvg("numeric-text", a));
+  });
+
+  it("changes when a thousands separator is introduced", () => {
+    const a = svg("<text>142984</text>");
+    const b = svg("<text>142,984</text>");
+    expect(probeSvg("numeric-text", b)).not.toBe(probeSvg("numeric-text", a));
+  });
+
+  it("is unchanged when numeric labels are merely deleted", () => {
+    // The type-04-numerals failure mode, written as a test: that arm cut 24
+    // numeric annotations to 2 and never touched formatting. A probe that
+    // responded to the count would score the deletion as engagement.
+    const a = svg("<text>73.48</text><text>72.23</text><text>71.81</text>");
+    const b = svg("<text>73.48</text>");
+    expect(probeSvg("numeric-text", b)).toBe(probeSvg("numeric-text", a));
+  });
+
+  it("is unchanged when the values differ but the format does not", () => {
+    // Every arm renders the same fixture, so a value difference here means a
+    // re-sort or a relabel — not a units-and-rounding decision.
+    const a = svg("<text>73.48</text>");
+    const b = svg("<text>81.92</text>");
+    expect(probeSvg("numeric-text", b)).toBe(probeSvg("numeric-text", a));
+  });
+
+  it("ignores non-numeric copy, so a headline rewrite is not a numbers change", () => {
+    const a = svg("<text>Life expectancy at birth</text><text>73.48</text>");
+    const b = svg("<text>Japan leads the world by nine years</text><text>73.48</text>");
+    expect(probeSvg("numeric-text", b)).toBe(probeSvg("numeric-text", a));
+  });
+
+  it("ignores position, colour and font on the numeric text", () => {
+    const a = svg('<text x="1" y="2" fill="#111" font-size="9">73.48</text>');
+    const b = svg('<text x="90" y="40" fill="#c00" font-size="14">73.48</text>');
+    expect(probeSvg("numeric-text", b)).toBe(probeSvg("numeric-text", a));
+  });
+});
+
 describe("probeSvg color", () => {
   it("changes when a palette is replaced", () => {
     const a = svg('<rect fill="#b07d52"/><rect fill="#c9b47a"/>');
