@@ -67,14 +67,19 @@ describe("rows", () => {
     // Deliberately a hard-coded list. A new entry is a claim about the gallery
     // — "another named skill left another row's lever untouched" — and should
     // fail here so it gets stated on /method, not absorbed as a refactor.
-    // num-01-units.B is the Phase 2 addition: dataviz replaced the palette and
-    // the mark geometry but wrote every number exactly as the baseline did.
+    // The three Phase 2 additions: num-01-units.B (dataviz replaced the palette
+    // and the mark geometry but wrote every number exactly as the baseline
+    // did), axis-03-grid.B (/impeccable distill cut twelve annotations and
+    // touched no gridline), and medium-02-theme.B (/impeccable adapt made the
+    // chart fluid-width and changed no colour).
     const declared = ROWS.flatMap((r) =>
       r.arms.filter((a) => a.nullResult).map((a) => `${r.id}.${a.arm}`),
     );
     expect(declared.sort()).toEqual([
+      "axis-03-grid.B",
       "mark-07-overlap.B",
       "mark-07-overlap.C",
+      "medium-02-theme.B",
       "num-01-units.B",
       "type-04-numerals.B",
     ]);

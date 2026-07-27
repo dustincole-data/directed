@@ -465,7 +465,8 @@
       {
         "arm": "B",
         "kind": "skill",
-        "method": "/impeccable distill"
+        "method": "/impeccable distill",
+        "nullResult": "/impeccable distill deleted all twelve delta labels under the bars and shortened the baseline annotation from World baseline: 73.48 to World baseline, cutting the chart from 46 text elements to 34. It changed no gridline at all: the six horizontal rules keep the same positions, the same 1px weight and the same light grey, and the dashed baseline rule and the axis line are byte-identical too. Whether, how faint, which direction is the one thing this row names, and the one thing distill left alone — it read the chart's clutter as annotation density rather than as grid."
       }
     ]
   },
@@ -919,7 +920,8 @@
       {
         "arm": "B",
         "kind": "skill",
-        "method": "/impeccable adapt"
+        "method": "/impeccable adapt",
+        "nullResult": "/impeccable adapt read adapt as responsive sizing rather than as theming: it added a preserveAspectRatio attribute and an inline style that lets the chart scale fluidly with whatever container embeds it, and touched not one colour. All 41 fills and strokes are identical to Arm A in document order, the white ground included, so the shipped cell is the same light chart the baseline was. Dark versus light theming is what this row names; the skill's own adapt remit turned out to be a different kind of adaptation, and the theming lever stays untested."
       }
     ]
   },

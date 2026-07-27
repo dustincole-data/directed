@@ -152,23 +152,40 @@ Two available fixes were rejected, and naming them is part of the disclosure:
   nothing has yet tested — from the 48-row inventory. The row keeps its title
   and keeps its null.
 
-### A fourth, from Phase 2
+### Three more, from Phase 2
 
-`num-01-units.B` — the row is "Units and rounding", the method is a bare
-`dataviz` invocation. The skill replaced the entire palette, added twelve `path`
-elements and moved the mark geometry: a large, genuine edit. It also wrote every
-number exactly as the baseline did — same rounding, same units, same
-separators — so both arms reduce to an identical `numeric-text` probe. It ships
-declared, like the other three.
+- **`num-01-units.B`** — the row is "Units and rounding", the method is a bare
+  `dataviz` invocation. The skill replaced the entire palette, added twelve
+  `path` elements and moved the mark geometry: a large, genuine edit. It also
+  wrote every number exactly as the baseline did — same rounding, same units,
+  same separators — so both arms reduce to an identical `numeric-text` probe.
+- **`axis-03-grid.B`** — the row is "Gridlines: whether, how faint, which
+  direction", the method is a bare `/impeccable distill`. It deleted all twelve
+  delta labels and shortened the baseline annotation, cutting the chart from 46
+  text elements to 34, and left every one of the six gridlines byte-identical —
+  same positions, same 1px weight, same grey — along with the dashed baseline
+  rule and the axis line. It read the chart's clutter as annotation density
+  rather than as grid.
+- **`medium-02-theme.B`** — the row is "Dark / light theming of the same
+  chart", the method is a bare `/impeccable adapt`. The skill read *adapt* as
+  responsive sizing: it added `preserveAspectRatio` and a fluid-width inline
+  style, and changed not one of the 41 fills and strokes, white ground included.
+  A different sense of the same word, and the theming lever stays untested.
 
-That makes three of the four nulls a bare `dataviz` invocation
-(`type-04-numerals.B`, `mark-07-overlap.B`, `num-01-units.B`). The pattern worth
-stating, and worth holding loosely at n=4: a named skill invoked with no brief
-reliably changes *something* — usually palette and layout, the things a chart
-skill reaches for first — and does not reliably change the specific lever a row
-was built to isolate. That is a claim about how these skills behave unprompted,
-which is exactly what the default-versus-directed comparison exists to measure;
-it is not evidence that the skills are bad at the lever when asked.
+All three ship declared, like the first three.
+
+That makes six nulls, and **every one of them is a named skill invoked with no
+brief** — three `dataviz` (`type-04-numerals.B`, `mark-07-overlap.B`,
+`num-01-units.B`) and three `/impeccable` (`mark-07-overlap.C` craft,
+`axis-03-grid.B` distill, `medium-02-theme.B` adapt). The pattern worth stating,
+and worth holding loosely at n=6: a named skill invoked with no brief reliably
+changes *something* — usually palette, annotation density and layout, the things
+a chart skill reaches for first — and does not reliably change the specific lever
+a row was built to isolate. `medium-02-theme.B` adds a second mechanism next to
+that one: a skill's remit may simply not be the thing the row's title assumed it
+was. Both are claims about how these skills behave unprompted, which is exactly
+what the default-versus-directed comparison exists to measure; neither is
+evidence that the skills are bad at the lever when asked.
 
 `mark-07-overlap` has a further, more interesting cause, found while deciding
 this and not previously recorded: **the baseline does not overplot.** Its eight
