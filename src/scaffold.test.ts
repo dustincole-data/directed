@@ -20,4 +20,14 @@ describe("scaffold", () => {
     expect(pkg.scripts.build).toContain("verify:cells");
     expect(pkg.scripts.build).toContain("typecheck");
   });
+
+  // src/generated/ is gitignored, so a fresh clone has no registry.json until
+  // build:registry writes it. Vite has ensureRegistryPlugin for dev and test,
+  // but tsc has no such hook: with typecheck first, every clean checkout — the
+  // deploy build included — failed on "Cannot find module registry.json".
+  it("generates the registry before anything that imports it", () => {
+    const build = pkg.scripts.build;
+    expect(build.indexOf("build:registry")).toBeLessThan(build.indexOf("typecheck"));
+    expect(build.indexOf("build:registry")).toBeLessThan(build.indexOf("astro build"));
+  });
 });

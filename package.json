@@ -10,7 +10,7 @@
   "scripts": {
     "predev": "node scripts/build-registry.mjs",
     "dev": "astro dev",
-    "build": "npm run typecheck && npm run verify:cells && npm run build:registry && astro build",
+    "build": "npm run build:registry && npm run typecheck && npm run verify:cells && astro build",
     "typecheck": "tsc --noEmit",
     "pretest": "node scripts/build-registry.mjs",
     "test": "vitest run",
